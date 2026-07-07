@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:REVERE/screens/queue_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../utils/app_colors.dart';
@@ -279,7 +280,7 @@ const SizedBox(height: 30),
         ],
       );
     },
-  )
+  ),
 
 
 
@@ -287,6 +288,56 @@ const SizedBox(height: 30),
   // Start Consultation
   //------------------------------------------------
 
+  const SizedBox(height: 35),
+
+  //------------------------------------------------
+  // Today's Waiting Queue
+  //------------------------------------------------
+
+  Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+
+      const Text(
+        "Today's Waiting Queue",
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+
+      TextButton.icon(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const DoctorWorkspace(),
+            ),
+          );
+        },
+        icon: const Icon(Icons.open_in_new),
+        label: const Text("Open Workspace"),
+      ),
+
+    ],
+  ),
+
+  const SizedBox(height: 15),
+
+  //------------------------------------------------
+  // Embedded Waiting Queue Screen
+  //------------------------------------------------
+
+  SizedBox(
+    height: 500,
+    width: double.infinity,
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(18),
+      child: const QueueScreen(),
+    ),
+  ),
+
+  const SizedBox(height: 30),
 
 
 

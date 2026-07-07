@@ -13,6 +13,8 @@ class PreviousSessionCard extends StatelessWidget {
 
   final VoidCallback onDelete;
 
+  final VoidCallback onTap;
+
   const PreviousSessionCard({
     super.key,
     required this.session,
@@ -20,6 +22,7 @@ class PreviousSessionCard extends StatelessWidget {
     required this.onView,
     required this.onPdf,
     required this.onDelete,
+    required this.onTap,
   });
 
   @override
@@ -30,281 +33,266 @@ class PreviousSessionCard extends StatelessWidget {
     return Card(
       elevation: 2,
       margin: const EdgeInsets.only(bottom: 15),
+      clipBehavior: Clip.antiAlias,
 
-      child: Padding(
-        padding: const EdgeInsets.all(15),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
 
-        child: Row(
-          crossAxisAlignment:
-          CrossAxisAlignment.start,
+        onTap: onTap,
 
-          children: [
+        child: Padding(
+          padding: const EdgeInsets.all(15),
 
-            //------------------------------------------------
-            // Session Number
-            //------------------------------------------------
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
 
-            CircleAvatar(
-              radius: 24,
+            children: [
 
-              backgroundColor:
-              Colors.blue.shade100,
+              //------------------------------------------------
+              // Session Number
+              //------------------------------------------------
 
-              child: Text(
-                "${session.sessionNumber}",
-
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
+              CircleAvatar(
+                radius: 24,
+                backgroundColor: Colors.blue.shade100,
+                child: Text(
+                  "${session.sessionNumber}",
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
 
-            const SizedBox(width: 15),
+              const SizedBox(width: 15),
 
-            //------------------------------------------------
-            // Details
-            //------------------------------------------------
+              //------------------------------------------------
+              // Details
+              //------------------------------------------------
 
-            Expanded(
-              child: Column(
-                crossAxisAlignment:
-                CrossAxisAlignment.start,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
 
-                children: [
+                  children: [
 
-                  Text(
-                    "Session ${session.sessionNumber}",
-
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight:
-                      FontWeight.bold,
-                    ),
-                  ),
-
-                  const SizedBox(height: 5),
-
-                  Row(
-                    children: [
-
-                      const Icon(
-                        Icons.calendar_today,
-                        size: 14,
-                        color: Colors.grey,
+                    Text(
+                      "Session ${session.sessionNumber}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
 
-                      const SizedBox(width: 5),
+                    const SizedBox(height: 5),
 
-                      Text(
-                        session.sessionDate,
+                    Row(
+                      children: [
 
-                        style: const TextStyle(
+                        const Icon(
+                          Icons.calendar_today,
+                          size: 14,
                           color: Colors.grey,
                         ),
-                      ),
 
-                    ],
-                  ),
+                        const SizedBox(width: 5),
 
-                  const SizedBox(height: 12),
-
-                  Wrap(
-                    spacing: 10,
-                    runSpacing: 8,
-
-                    children: [
-
-                      Container(
-                        padding:
-                        const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                        Text(
+                          session.sessionDate,
+                          style: const TextStyle(
+                            color: Colors.grey,
+                          ),
                         ),
 
-                        decoration: BoxDecoration(
-                          color:
-                          Colors.blue.shade50,
+                      ],
+                    ),
 
-                          borderRadius:
-                          BorderRadius.circular(
-                              20),
-                        ),
+                    const SizedBox(height: 12),
 
-                        child: Row(
-                          mainAxisSize:
-                          MainAxisSize.min,
+                    Wrap(
+                      spacing: 10,
+                      runSpacing: 8,
 
-                          children: [
+                      children: [
 
-                            const Icon(
-                              Icons.currency_rupee,
-                              size: 15,
-                              color: Colors.blue,
-                            ),
+                        Container(
+                          padding:
+                          const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
 
-                            Text(
-                              session.paymentAmount
-                                  .isEmpty
-                                  ? "N/A"
-                                  : session
-                                  .paymentAmount,
+                          decoration: BoxDecoration(
+                            color: Colors.blue.shade50,
+                            borderRadius:
+                            BorderRadius.circular(20),
+                          ),
 
-                              style:
-                              const TextStyle(
-                                fontWeight:
-                                FontWeight.bold,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
 
+                            children: [
+
+                              const Icon(
+                                Icons.currency_rupee,
+                                size: 15,
                                 color: Colors.blue,
                               ),
-                            ),
 
-                          ],
-                        ),
-                      ),
+                              Text(
+                                session.paymentAmount.isEmpty
+                                    ? "N/A"
+                                    : session.paymentAmount,
 
-                      Container(
-                        padding:
-                        const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
-                        ),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.blue,
+                                ),
+                              ),
 
-                        decoration: BoxDecoration(
-                          color: completed
-                              ? Colors.green
-                              .shade100
-                              : Colors.orange
-                              .shade100,
-
-                          borderRadius:
-                          BorderRadius.circular(
-                              20),
+                            ],
+                          ),
                         ),
 
-                        child: Row(
-                          mainAxisSize:
-                          MainAxisSize.min,
+                        Container(
+                          padding:
+                          const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
 
-                          children: [
+                          decoration: BoxDecoration(
+                            color: completed
+                                ? Colors.green.shade100
+                                : Colors.orange.shade100,
 
-                            Icon(
-                              completed
-                                  ? Icons
-                                  .check_circle
-                                  : Icons.pending,
+                            borderRadius:
+                            BorderRadius.circular(20),
+                          ),
 
-                              size: 15,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
 
-                              color: completed
-                                  ? Colors.green
-                                  : Colors.orange,
-                            ),
+                            children: [
 
-                            const SizedBox(width: 5),
+                              Icon(
+                                completed
+                                    ? Icons.check_circle
+                                    : Icons.pending,
 
-                            Text(
-                              session.paymentStatus,
-
-                              style: TextStyle(
-                                fontWeight:
-                                FontWeight.bold,
+                                size: 15,
 
                                 color: completed
                                     ? Colors.green
                                     : Colors.orange,
                               ),
-                            ),
 
-                          ],
+                              const SizedBox(width: 5),
+
+                              Text(
+                                session.paymentStatus,
+
+                                style: TextStyle(
+                                  fontWeight:
+                                  FontWeight.bold,
+
+                                  color: completed
+                                      ? Colors.green
+                                      : Colors.orange,
+                                ),
+                              ),
+
+                            ],
+                          ),
                         ),
-                      ),
 
-                    ],
+                      ],
+                    ),
+
+                  ],
+                ),
+              ),
+
+              //------------------------------------------------
+              // Menu
+              //------------------------------------------------
+
+              PopupMenuButton<String>(
+                onSelected: (value) {
+
+                  switch (value) {
+
+                    case "edit":
+                      onEdit();
+                      break;
+
+                    case "view":
+                      onView();
+                      break;
+
+                    case "pdf":
+                      onPdf();
+                      break;
+
+                    case "delete":
+                      onDelete();
+                      break;
+
+                  }
+
+                },
+
+                itemBuilder: (_) => const [
+
+                  PopupMenuItem(
+                    value: "edit",
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit),
+                        SizedBox(width: 8),
+                        Text("Edit Session"),
+                      ],
+                    ),
+                  ),
+
+                  PopupMenuItem(
+                    value: "view",
+                    child: Row(
+                      children: [
+                        Icon(Icons.visibility),
+                        SizedBox(width: 8),
+                        Text("View"),
+                      ],
+                    ),
+                  ),
+
+                  PopupMenuItem(
+                    value: "pdf",
+                    child: Row(
+                      children: [
+                        Icon(Icons.picture_as_pdf),
+                        SizedBox(width: 8),
+                        Text("Generate PDF"),
+                      ],
+                    ),
+                  ),
+
+                  PopupMenuItem(
+                    value: "delete",
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete),
+                        SizedBox(width: 8),
+                        Text("Delete"),
+                      ],
+                    ),
                   ),
 
                 ],
               ),
-            ),
 
-            //------------------------------------------------
-            // Menu
-            //------------------------------------------------
-
-            PopupMenuButton<String>(
-              onSelected: (value) {
-
-                switch (value) {
-
-                  case "edit":
-                    onEdit();
-                    break;
-
-                  case "view":
-                    onView();
-                    break;
-
-                  case "pdf":
-                    onPdf();
-                    break;
-
-                  case "delete":
-                    onDelete();
-                    break;
-
-                }
-
-              },
-
-              itemBuilder: (_) => const [
-
-                PopupMenuItem(
-                  value: "edit",
-                  child: Row(
-                    children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text("Edit"),
-                    ],
-                  ),
-                ),
-
-                PopupMenuItem(
-                  value: "view",
-                  child: Row(
-                    children: [
-                      Icon(Icons.visibility),
-                      SizedBox(width: 8),
-                      Text("View"),
-                    ],
-                  ),
-                ),
-
-                PopupMenuItem(
-                  value: "pdf",
-                  child: Row(
-                    children: [
-                      Icon(Icons.picture_as_pdf),
-                      SizedBox(width: 8),
-                      Text("Generate PDF"),
-                    ],
-                  ),
-                ),
-
-                PopupMenuItem(
-                  value: "delete",
-                  child: Row(
-                    children: [
-                      Icon(Icons.delete),
-                      SizedBox(width: 8),
-                      Text("Delete"),
-                    ],
-                  ),
-                ),
-
-              ],
-            ),
-
-          ],
+            ],
+          ),
         ),
       ),
     );

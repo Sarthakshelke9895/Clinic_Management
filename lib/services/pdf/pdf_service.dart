@@ -439,6 +439,37 @@ class PdfService {
 
             pw.SizedBox(height: 10),
 
+            buildSectionTitle("Session Note"),
+
+            pw.Container(
+              width: double.infinity,
+
+              padding: const pw.EdgeInsets.all(15),
+
+              decoration: pw.BoxDecoration(
+                color: PdfColors.white,
+
+                border: pw.Border.all(
+                  color: PdfColors.blue100,
+                  width: 0.8,
+                ),
+
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+
+              child: pw.Text(
+                session.sessionNote.trim().isEmpty
+                    ? "No Session Note Added"
+                    : session.sessionNote,
+
+                style: const pw.TextStyle(
+                  fontSize: 11,
+                  lineSpacing: 4,
+                  color: PdfColors.grey800,
+                ),
+              ),
+            ),
+
             //--------------------------------------------------
 // Payment Details
 //--------------------------------------------------

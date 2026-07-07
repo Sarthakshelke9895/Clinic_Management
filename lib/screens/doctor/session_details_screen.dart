@@ -729,6 +729,61 @@ class SessionDetailsScreen extends StatelessWidget {
 
         ),
 
+        const SizedBox(height: 20),
+
+//==========================================================
+// Session Note
+//==========================================================
+
+        buildSectionCard(
+          icon: Icons.sticky_note_2_outlined,
+
+          title: "Session Note",
+
+          children: [
+
+            Container(
+              width: double.infinity,
+
+              padding: const EdgeInsets.all(16),
+
+              decoration: BoxDecoration(
+                color: Colors.grey.withValues(
+                  alpha: .06,
+                ),
+
+                borderRadius:
+                BorderRadius.circular(12),
+
+                border: Border.all(
+                  color: Colors.grey.withValues(
+                    alpha: .20,
+                  ),
+                ),
+              ),
+
+              child: Text(
+                session.sessionNote.trim().isEmpty
+                    ? "No Session Note Added"
+                    : session.sessionNote,
+
+                style: TextStyle(
+                  fontSize: 14,
+
+                  height: 1.6,
+
+                  color:
+                  session.sessionNote.trim().isEmpty
+                      ? AppColors.textSecondary
+                      : AppColors.textPrimary,
+                ),
+              ),
+            ),
+
+          ],
+        ),
+
+
 //--------------------------------------------------
 // Buttons
 //--------------------------------------------------

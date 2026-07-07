@@ -202,5 +202,24 @@ class SessionRepository {
 
   }
 
+  //=========================================================
+// Update Session Note Only
+//=========================================================
+
+  Future<void> updateSessionNote({
+    required String sessionId,
+    required String sessionNote,
+  }) async {
+
+    await sessions
+        .doc(sessionId)
+        .update({
+
+      "sessionNote": sessionNote,
+
+    });
+
+  }
+
 
 }

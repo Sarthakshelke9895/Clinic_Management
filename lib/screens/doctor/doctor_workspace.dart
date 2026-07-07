@@ -28,19 +28,82 @@ class DoctorWorkspace extends StatefulWidget {
 
 class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
+
+
+  final GlobalKey<FormState> consultationFormKey =
+  GlobalKey<FormState>();
+
   Widget _buildTextField(
       String label,
-      TextEditingController controller,
-      ) {
+      TextEditingController controller, {
+        bool isRequired = true,
+      }) {
     return SizedBox(
       width: 260,
       child: TextFormField(
         controller: controller,
+
+        autovalidateMode:
+        AutovalidateMode.onUserInteraction,
+
+        validator: isRequired
+            ? (value) {
+          if (value == null ||
+              value.trim().isEmpty) {
+            return "$label is required";
+          }
+
+          return null;
+        }
+            : null,
+
         decoration: InputDecoration(
-          labelText: label,
+          labelText:
+          isRequired ? "$label *" : label,
+
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius:
+            BorderRadius.circular(12),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMultilineField(
+      String label,
+      TextEditingController controller, {
+        int maxLines = 3,
+        bool isRequired = true,
+      }) {
+    return TextFormField(
+      controller: controller,
+
+      maxLines: maxLines,
+
+      autovalidateMode:
+      AutovalidateMode.onUserInteraction,
+
+      validator: isRequired
+          ? (value) {
+        if (value == null ||
+            value.trim().isEmpty) {
+          return "$label is required";
+        }
+
+        return null;
+      }
+          : null,
+
+      decoration: InputDecoration(
+        labelText:
+        isRequired ? "$label *" : label,
+
+        alignLabelWithHint: true,
+
+        border: OutlineInputBorder(
+          borderRadius:
+          BorderRadius.circular(12),
         ),
       ),
     );
@@ -59,8 +122,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==========================================================
 
   bool isEditing = false;
-
   SessionModel? editingSession;
+  bool sessionSavedForCurrentQueueVisit = false;
+
+
+  String? currentQueueVisitSessionId;
+  String currentQueueVisitPaymentAmount = "";
+  String currentQueueVisitPaymentStatus = "Completed";
 
   //==========================================================
   // Queue
@@ -196,7 +264,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   final paymentAmountController =
   TextEditingController();
 
+  final TextEditingController sessionNoteController =
+  TextEditingController();
+
+
+
   String paymentStatus = "Completed";
+
 
   //==========================================================
   // Session History
@@ -270,66 +344,95 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
 // Load Patient
 //==========================================================
-
   Future<void> loadPatient(
       String patientId,
       ) async {
+    try {
+      //--------------------------------------------------
+      // Load Patient
+      //--------------------------------------------------
 
-    //--------------------------------------------------
-    // Load Patient
-    //--------------------------------------------------
+      final patient =
+      await patientRepository.getPatientById(
+        patientId,
+      );
 
-    final patient =
-    await patientRepository.getPatientById(
-      patientId,
-    );
-
-    if (patient == null) {
-      return;
-    }
-
-    //--------------------------------------------------
-    // Load Latest Session
-    //--------------------------------------------------
-
-    final latestSession =
-    await sessionRepository.getLatestSession(
-      patient.id!,
-    );
-
-    //--------------------------------------------------
-    // Update UI
-    //--------------------------------------------------
-
-    setState(() {
-
-      selectedPatient = patient;
-
-      if (latestSession != null) {
-
-        populateForm(
-          latestSession,
-        );
-
-      } else {
-
-        clearForm();
-
+      if (patient == null) {
+        return;
       }
 
-    });
+      //--------------------------------------------------
+      // Reset Current Workspace State
+      //--------------------------------------------------
 
-    //--------------------------------------------------
-    // Refresh Previous Sessions
-    //--------------------------------------------------
+      isEditing = false;
 
-    sessions = await sessionRepository
-        .getPatientSessions(
-      patient.id!,
-    );
+      editingSession = null;
 
-    setState(() {});
+      sessionSavedForCurrentQueueVisit = false;
 
+      currentQueueVisitSessionId = null;
+
+      currentQueueVisitPaymentAmount = "";
+
+      currentQueueVisitPaymentStatus = "Completed";
+
+      //--------------------------------------------------
+      // Load Latest Session
+      //--------------------------------------------------
+
+      final latestSession =
+      await sessionRepository.getLatestSession(
+        patient.id!,
+      );
+
+      //--------------------------------------------------
+      // Load Previous Sessions
+      //--------------------------------------------------
+
+      final patientSessions =
+      await sessionRepository.getPatientSessions(
+        patient.id!,
+      );
+
+      //--------------------------------------------------
+      // Check Widget Still Exists
+      //--------------------------------------------------
+
+      if (!mounted) {
+        return;
+      }
+
+      //--------------------------------------------------
+      // Update Workspace UI Once
+      //--------------------------------------------------
+
+      setState(() {
+        selectedPatient = patient;
+
+        sessions = patientSessions;
+
+        if (latestSession != null) {
+          populateForm(
+            latestSession,
+          );
+        } else {
+          clearForm();
+        }
+      });
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Failed to load patient: $e",
+          ),
+        ),
+      );
+    }
   }
 
   void clearForm() {
@@ -362,11 +465,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
 // Populate Form From Previous Session
 //==========================================================
-
   void populateForm(
       SessionModel session,
       ) {
-
     //--------------------------------------------------
     // History
     //--------------------------------------------------
@@ -374,7 +475,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     chiefComplaintController.text =
         session.chiefComplaint;
 
-    durationController.clear();
+    durationController.text =
+        session.duration;
 
     //--------------------------------------------------
     // OPQRST
@@ -382,14 +484,19 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
     onsetController.text =
         session.onset;
+
     provocationController.text =
         session.provocation;
+
     qualityController.text =
         session.quality;
+
     regionController.text =
         session.region;
+
     severityController.text =
         session.severity;
+
     timingController.text =
         session.timing;
 
@@ -399,12 +506,16 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
     sinssSeverityController.text =
         session.sinssSeverity;
+
     irritabilityController.text =
         session.irritability;
+
     natureController.text =
         session.nature;
+
     stageController.text =
         session.stage;
+
     stabilityController.text =
         session.stability;
 
@@ -423,167 +534,252 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
     biomechanicalController.text =
         session.biomechanicalFindings;
+
     osteopathicController.text =
         session.osteopathicFindings;
+
     otherFindingsController.text =
         session.otherFindings;
 
     //--------------------------------------------------
-    // Today's Treatment
+    // Rx Goal / Advice
     //--------------------------------------------------
 
-    treatmentGoalController.clear();
-    treatmentGivenController.clear();
-    homeExerciseController.clear();
-    adviceController.clear();
-    paymentAmountController.clear();
-    paymentStatus = "Completed";
+    treatmentGoalController.text =
+        session.treatmentGoals;
 
+    treatmentGivenController.text =
+        session.treatmentGiven;
+
+    homeExerciseController.text =
+        session.homeExerciseProgram;
+
+    adviceController.text =
+        session.advice;
+
+    //--------------------------------------------------
+    // Session Note
+    //--------------------------------------------------
+
+    sessionNoteController.text =
+        session.sessionNote;
+
+    //--------------------------------------------------
+    // Payment
+    //
+    // IMPORTANT:
+    // Payment belongs to the current visit.
+    // Never carry payment from the previous session.
+    //--------------------------------------------------
+
+    paymentAmountController.clear();
+
+    paymentStatus = "Completed";
   }
 
-  Future<void> saveSession() async {
-    try {
-      //=========================================
-      // Validation
-      //=========================================
 
-      if (selectedPatient == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Please select a patient."),
+
+
+  Future<void> completeConsultation() async {
+    //==========================================================
+    // Validate Selected Patient And Queue
+    //==========================================================
+
+    if (selectedPatient == null ||
+        selectedQueue == null ||
+        selectedQueue!.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please select a patient from the waiting queue.",
           ),
+        ),
+      );
+
+      return;
+    }
+
+    //==========================================================
+    // Require Session Saved During Current Queue Visit
+    //==========================================================
+
+    if (!sessionSavedForCurrentQueueVisit ||
+        currentQueueVisitSessionId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please save at least one session before completing the consultation.",
+          ),
+        ),
+      );
+
+      return;
+    }
+
+    //==========================================================
+    // Confirmation Dialog
+    //==========================================================
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+
+          title: const Row(
+            children: [
+              Icon(
+                Icons.task_alt_rounded,
+              ),
+              SizedBox(width: 10),
+              Text(
+                "Complete Consultation",
+              ),
+            ],
+          ),
+
+          content: Text(
+            isEditing
+                ? "You are currently editing a session. "
+                "Completing the consultation will discard unsaved changes "
+                "and remove ${selectedPatient!.name} from the waiting queue."
+                : "Complete the consultation for "
+                "${selectedPatient!.name} and remove the patient from the waiting queue?",
+          ),
+
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child: const Text(
+                "Cancel",
+              ),
+            ),
+
+            FilledButton.icon(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              icon: const Icon(
+                Icons.check_rounded,
+              ),
+              label: const Text(
+                "Complete",
+              ),
+            ),
+          ],
         );
+      },
+    );
+
+    if (confirm != true) {
+      return;
+    }
+
+    //==========================================================
+    // Copy Required Values Before Async Operation
+    //==========================================================
+
+    final queueId =
+    selectedQueue!.id!;
+
+    final sessionId =
+    currentQueueVisitSessionId!;
+
+    final savedPaymentAmount =
+        currentQueueVisitPaymentAmount;
+
+    final savedPaymentStatus =
+        currentQueueVisitPaymentStatus;
+
+    try {
+      //========================================================
+      // Complete Queue Entry
+      //========================================================
+
+      await queueRepository.completeQueue(
+        queueId: queueId,
+        sessionId: sessionId,
+        paymentAmount: savedPaymentAmount,
+        paymentStatus: savedPaymentStatus,
+      );
+
+      //========================================================
+      // Check Widget Still Exists
+      //========================================================
+
+      if (!mounted) {
         return;
       }
 
-      //=========================================
-      // Get Next Session Number
-      //=========================================
+      //========================================================
+      // Clear Workspace State
+      //========================================================
 
-      final sessionNumber = await sessionRepository
-          .getNextSessionNumber(selectedPatient!.id!);
+      selectedPatient = null;
 
-      //=========================================
-      // Create Session Model
-      //=========================================
+      selectedQueue = null;
 
-      final session = SessionModel(
-        patientId: selectedPatient!.id!,
-        queueId: selectedQueue?.id ?? "",
+      sessions = [];
 
-        patientCode: selectedPatient!.patientCode,
-        patientName: selectedPatient!.name,
-        phone: selectedPatient!.phone,
-        age: selectedPatient!.age,
-        gender: selectedPatient!.gender,
-        address: selectedPatient!.address,
+      isEditing = false;
 
-        sessionNumber: sessionNumber,
-        sessionDate: DateFormat('yyyy-MM-dd').format(DateTime.now()),
-        createdAt: DateTime.now(),
+      editingSession = null;
 
-        chiefComplaint: chiefComplaintController.text.trim(),
-        duration: durationController.text.trim(),
+      sessionSavedForCurrentQueueVisit = false;
 
-        onset: onsetController.text.trim(),
-        provocation: provocationController.text.trim(),
-        quality: qualityController.text.trim(),
-        region: regionController.text.trim(),
-        severity: severityController.text.trim(),
-        timing: timingController.text.trim(),
+      currentQueueVisitSessionId = null;
 
-        sinssSeverity: sinssSeverityController.text.trim(),
-        irritability: irritabilityController.text.trim(),
-        nature: natureController.text.trim(),
-        stage: stageController.text.trim(),
-        stability: stabilityController.text.trim(),
+      currentQueueVisitPaymentAmount = "";
 
-        origins: List<String>.from(selectedOrigins),
+      currentQueueVisitPaymentStatus =
+      "Completed";
 
-        biomechanicalFindings:
-        biomechanicalController.text.trim(),
+      clearForm();
 
-        osteopathicFindings:
-        osteopathicController.text.trim(),
-
-        otherFindings:
-        otherFindingsController.text.trim(),
-
-        treatmentGoals:
-        treatmentGoalController.text.trim(),
-
-        treatmentGiven:
-        treatmentGivenController.text.trim(),
-
-        homeExerciseProgram:
-        homeExerciseController.text.trim(),
-
-        advice:
-        adviceController.text.trim(),
-
-        paymentAmount:
-        paymentAmountController.text.trim(),
-
-        paymentStatus:
-        paymentStatus,
-      );
-
-      //=========================================
-      // Save Session
-      //=========================================
-
-      final sessionId =
-      await sessionRepository.saveSession(session);
-
-      //=========================================
-      // Mark Queue Completed
-      //=========================================
-
-      if (selectedQueue != null) {
-
-        await queueRepository.completeQueue(
-          queueId: selectedQueue!.id!,
-          sessionId: sessionId,
-
-          paymentAmount: paymentAmountController.text.trim(),
-
-          paymentStatus: paymentStatus,
-        );
-      }
-
-      //=========================================
-      // Reload Previous Sessions
-      //=========================================
-
-      sessions = await sessionRepository.getPatientSessions(
-        selectedPatient!.id!,
-      );
-
-      //=========================================
+      //========================================================
       // Refresh Waiting Queue
-      //=========================================
+      //========================================================
 
       await refreshQueue();
 
-      //=========================================
-      // Update UI
-      //=========================================
-      clearForm();
+      if (!mounted) {
+        return;
+      }
+
       setState(() {});
 
-      //=========================================
+      //========================================================
       // Success Message
-      //=========================================
+      //========================================================
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Session Saved Successfully"),
+          content: Text(
+            "Consultation Completed Successfully",
+          ),
         ),
       );
     } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(
+            "Failed to complete consultation: $e",
+          ),
         ),
       );
     }
@@ -703,6 +899,14 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     adviceController.text =
         session.advice;
 
+    paymentAmountController.text =
+        session.paymentAmount;
+
+    paymentStatus =
+    session.paymentStatus == "Pending"
+        ? "Pending"
+        : "Completed";
+
     isEditing = true;
 
     editingSession = session;
@@ -712,63 +916,785 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
   // Dispose
   //==========================================================
-
-
-  Future<void> updateSession() async {
+  Future<void> saveNewSession(
+      String sessionNote,
+      ) async {
 
     try {
 
-      if (editingSession == null) {
+      //=========================================
+      // Safety Validation
+      //=========================================
 
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (selectedPatient == null) {
+        return;
+      }
 
-          const SnackBar(
-            content: Text("No session selected for editing."),
+
+      final patient =
+      selectedPatient!;
+
+
+      //=========================================
+      // Get Next Session Number
+      //=========================================
+
+      final sessionNumber =
+      await sessionRepository
+          .getNextSessionNumber(
+        patient.id!,
+      );
+
+
+      //=========================================
+      // Create Complete Session Snapshot
+      //=========================================
+
+      final session =
+      SessionModel(
+
+        patientId:
+        patient.id!,
+
+        queueId:
+        selectedQueue?.id ?? "",
+
+
+        //=======================================
+        // Patient Information
+        //=======================================
+
+        patientCode:
+        patient.patientCode,
+
+        patientName:
+        patient.name,
+
+        phone:
+        patient.phone,
+
+        age:
+        patient.age,
+
+        gender:
+        patient.gender,
+
+        address:
+        patient.address,
+
+
+        //=======================================
+        // Session Information
+        //=======================================
+
+        sessionNumber:
+        sessionNumber,
+
+        sessionDate:
+        DateFormat(
+          'yyyy-MM-dd',
+        ).format(
+          DateTime.now(),
+        ),
+
+        createdAt:
+        DateTime.now(),
+
+
+        //=======================================
+        // History
+        //=======================================
+
+        chiefComplaint:
+        chiefComplaintController
+            .text
+            .trim(),
+
+        duration:
+        durationController
+            .text
+            .trim(),
+
+
+        //=======================================
+        // OPQRST
+        //=======================================
+
+        onset:
+        onsetController
+            .text
+            .trim(),
+
+        provocation:
+        provocationController
+            .text
+            .trim(),
+
+        quality:
+        qualityController
+            .text
+            .trim(),
+
+        region:
+        regionController
+            .text
+            .trim(),
+
+        severity:
+        severityController
+            .text
+            .trim(),
+
+        timing:
+        timingController
+            .text
+            .trim(),
+
+
+        //=======================================
+        // SINSS
+        //=======================================
+
+        sinssSeverity:
+        sinssSeverityController
+            .text
+            .trim(),
+
+        irritability:
+        irritabilityController
+            .text
+            .trim(),
+
+        nature:
+        natureController
+            .text
+            .trim(),
+
+        stage:
+        stageController
+            .text
+            .trim(),
+
+        stability:
+        stabilityController
+            .text
+            .trim(),
+
+
+        //=======================================
+        // Origin
+        //=======================================
+
+        origins:
+        List<String>.from(
+          selectedOrigins,
+        ),
+
+
+        //=======================================
+        // Assessment
+        //=======================================
+
+        biomechanicalFindings:
+        biomechanicalController
+            .text
+            .trim(),
+
+        osteopathicFindings:
+        osteopathicController
+            .text
+            .trim(),
+
+        otherFindings:
+        otherFindingsController
+            .text
+            .trim(),
+
+
+        //=======================================
+        // Treatment
+        //=======================================
+
+        treatmentGoals:
+        treatmentGoalController
+            .text
+            .trim(),
+
+        treatmentGiven:
+        treatmentGivenController
+            .text
+            .trim(),
+
+        homeExerciseProgram:
+        homeExerciseController
+            .text
+            .trim(),
+
+        advice:
+        adviceController
+            .text
+            .trim(),
+
+
+        //=======================================
+        // Payment
+        //=======================================
+
+        paymentAmount:
+        paymentAmountController
+            .text
+            .trim(),
+
+        paymentStatus:
+        paymentStatus,
+
+
+        //=======================================
+        // Session Note
+        //=======================================
+
+        sessionNote:
+        sessionNote,
+
+      );
+
+
+      //=========================================
+      // Save Session
+      //=========================================
+
+      //=========================================
+// Save Session
+//=========================================
+
+      final savedSessionId =
+      await sessionRepository.saveSession(
+        session,
+      );
+
+//=========================================
+// Track Current Queue Visit Session
+//=========================================
+
+      sessionSavedForCurrentQueueVisit = true;
+
+      currentQueueVisitSessionId =
+          savedSessionId;
+
+      currentQueueVisitPaymentAmount =
+          session.paymentAmount;
+
+      currentQueueVisitPaymentStatus =
+          session.paymentStatus;
+
+      //=========================================
+      // Reload Previous Sessions
+      //=========================================
+
+      sessions =
+      await sessionRepository
+          .getPatientSessions(
+        patient.id!,
+      );
+
+
+      //=========================================
+      // Prepare Form For Next Session
+      //=========================================
+
+      prepareFormAfterSessionSave(
+        session,
+      );
+
+
+      if (!mounted) {
+        return;
+      }
+
+
+      setState(() {});
+
+
+      //=========================================
+      // Success Message
+      //=========================================
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            "Session $sessionNumber Saved Successfully",
           ),
+        ),
 
+      );
+
+    } catch (e) {
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context)
+          .showSnackBar(
+
+        SnackBar(
+          content: Text(
+            "Failed to save session: $e",
+          ),
+        ),
+
+      );
+
+    }
+
+  }
+
+  void prepareFormAfterSessionSave(
+      SessionModel savedSession,
+      ) {
+
+    //=========================================
+    // Carry Forward Clinical Information
+    //=========================================
+
+    chiefComplaintController.text =
+        savedSession.chiefComplaint;
+
+    durationController.text =
+        savedSession.duration;
+
+
+    onsetController.text =
+        savedSession.onset;
+
+    provocationController.text =
+        savedSession.provocation;
+
+    qualityController.text =
+        savedSession.quality;
+
+    regionController.text =
+        savedSession.region;
+
+    severityController.text =
+        savedSession.severity;
+
+    timingController.text =
+        savedSession.timing;
+
+
+    sinssSeverityController.text =
+        savedSession.sinssSeverity;
+
+    irritabilityController.text =
+        savedSession.irritability;
+
+    natureController.text =
+        savedSession.nature;
+
+    stageController.text =
+        savedSession.stage;
+
+    stabilityController.text =
+        savedSession.stability;
+
+
+    selectedOrigins =
+    List<String>.from(
+      savedSession.origins,
+    );
+
+
+    biomechanicalController.text =
+        savedSession.biomechanicalFindings;
+
+    osteopathicController.text =
+        savedSession.osteopathicFindings;
+
+    otherFindingsController.text =
+        savedSession.otherFindings;
+
+
+    //=========================================
+    // Clear Session-Specific Information
+    //=========================================
+
+    treatmentGoalController.clear();
+
+    treatmentGivenController.clear();
+
+    homeExerciseController.clear();
+
+    adviceController.clear();
+
+    paymentAmountController.clear();
+
+    paymentStatus =
+    "Completed";
+
+    sessionNoteController.clear();
+
+
+    //=========================================
+    // Reset Form Validation State
+    //=========================================
+
+    AutovalidateMode consultationAutoValidate =
+        AutovalidateMode.disabled;
+
+  }
+
+  Future<void> showSessionNoteDialog(
+      SessionModel session,
+      ) async {
+    final controller = TextEditingController(
+      text: session.sessionNote,
+    );
+
+    bool isEditingNote = false;
+    bool isUpdating = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
+              ),
+
+              //=========================================
+              // Title + Cross Close Button
+              //=========================================
+
+              title: Row(
+                children: [
+                  const Icon(
+                    Icons.sticky_note_2_outlined,
+                  ),
+
+                  const SizedBox(width: 10),
+
+                  Expanded(
+                    child: Text(
+                      "Session ${session.sessionNumber} Note",
+                    ),
+                  ),
+
+                  IconButton(
+                    tooltip: "Close",
+                    onPressed: isUpdating
+                        ? null
+                        : () {
+                      Navigator.pop(dialogContext);
+                    },
+                    icon: const Icon(
+                      Icons.close_rounded,
+                    ),
+                  ),
+                ],
+              ),
+
+              //=========================================
+              // Session Note Field
+              //=========================================
+
+              content: SizedBox(
+                width: 520,
+                child: TextFormField(
+                  controller: controller,
+
+                  readOnly: !isEditingNote,
+
+                  autofocus: isEditingNote,
+
+                  maxLines: 8,
+
+                  decoration: InputDecoration(
+                    labelText: "Session Note",
+
+                    alignLabelWithHint: true,
+
+                    filled: !isEditingNote,
+
+                    fillColor: !isEditingNote
+                        ? Colors.grey.shade100
+                        : null,
+
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+
+              //=========================================
+              // Bottom Button
+              //=========================================
+
+              actions: [
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+
+                  child: FilledButton.icon(
+                    icon: isUpdating
+                        ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                      ),
+                    )
+                        : Icon(
+                      isEditingNote
+                          ? Icons.update_outlined
+                          : Icons.edit_outlined,
+                    ),
+
+                    label: Text(
+                      isUpdating
+                          ? "Updating..."
+                          : isEditingNote
+                          ? "Update Session Note"
+                          : "Edit Session Note",
+                    ),
+
+                    onPressed: isUpdating
+                        ? null
+                        : () async {
+                      //=================================
+                      // Enable Edit Mode
+                      //=================================
+
+                      if (!isEditingNote) {
+                        setDialogState(() {
+                          isEditingNote = true;
+                        });
+
+                        return;
+                      }
+
+                      //=================================
+                      // Validate Updated Note
+                      //=================================
+
+                      final updatedNote =
+                      controller.text.trim();
+
+                      if (updatedNote.isEmpty) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Session Note cannot be empty.",
+                            ),
+                          ),
+                        );
+
+                        return;
+                      }
+
+                      //=================================
+                      // Do Nothing If Note Unchanged
+                      //=================================
+
+                      if (updatedNote ==
+                          session.sessionNote) {
+                        setDialogState(() {
+                          isEditingNote = false;
+                        });
+
+                        return;
+                      }
+
+                      setDialogState(() {
+                        isUpdating = true;
+                      });
+
+                      //=================================
+                      // Update Note Only
+                      //=================================
+
+                      final success =
+                      await updateSessionNoteOnly(
+                        session: session,
+                        updatedNote: updatedNote,
+                      );
+
+                      if (!dialogContext.mounted) {
+                        return;
+                      }
+
+                      if (success) {
+                        Navigator.pop(dialogContext);
+                        return;
+                      }
+
+                      setDialogState(() {
+                        isUpdating = false;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+  }
+  Future<void> updateSession() async {
+    try {
+      //-------------------------------------------------------
+      // Validate Editing Session
+      //-------------------------------------------------------
+
+      if (editingSession == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "No session selected for editing.",
+            ),
+          ),
         );
 
         return;
-
       }
 
-      final updatedSession = SessionModel(
+      //-------------------------------------------------------
+      // Validate Selected Patient
+      //-------------------------------------------------------
 
+      if (selectedPatient == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "No patient selected.",
+            ),
+          ),
+        );
+
+        return;
+      }
+
+      //-------------------------------------------------------
+      // Create Updated Session
+      //-------------------------------------------------------
+
+      final updatedSession = SessionModel(
         id: editingSession!.id,
 
-        patientId: selectedPatient!.id!,
-        queueId: editingSession!.queueId,
+        patientId:
+        selectedPatient!.id!,
 
-        patientCode: selectedPatient!.patientCode,
-        patientName: selectedPatient!.name,
-        phone: selectedPatient!.phone,
-        age: selectedPatient!.age,
-        gender: selectedPatient!.gender,
-        address: selectedPatient!.address,
+        queueId:
+        editingSession!.queueId,
 
-        // Keep original values
-        sessionNumber: editingSession!.sessionNumber,
-        sessionDate: editingSession!.sessionDate,
-        createdAt: editingSession!.createdAt,
+        //-----------------------------------------------------
+        // Patient Information
+        //-----------------------------------------------------
 
-        // Updated Form Values
-        chiefComplaint: chiefComplaintController.text.trim(),
-        duration: durationController.text.trim(),
+        patientCode:
+        selectedPatient!.patientCode,
 
-        onset: onsetController.text.trim(),
-        provocation: provocationController.text.trim(),
-        quality: qualityController.text.trim(),
-        region: regionController.text.trim(),
-        severity: severityController.text.trim(),
-        timing: timingController.text.trim(),
+        patientName:
+        selectedPatient!.name,
 
-        sinssSeverity: sinssSeverityController.text.trim(),
-        irritability: irritabilityController.text.trim(),
-        nature: natureController.text.trim(),
-        stage: stageController.text.trim(),
-        stability: stabilityController.text.trim(),
+        phone:
+        selectedPatient!.phone,
 
-        origins: List<String>.from(selectedOrigins),
+        age:
+        selectedPatient!.age,
+
+        gender:
+        selectedPatient!.gender,
+
+        address:
+        selectedPatient!.address,
+
+        //-----------------------------------------------------
+        // Keep Original Session Information
+        //-----------------------------------------------------
+
+        sessionNumber:
+        editingSession!.sessionNumber,
+
+        sessionDate:
+        editingSession!.sessionDate,
+
+        createdAt:
+        editingSession!.createdAt,
+
+        //-----------------------------------------------------
+        // History
+        //-----------------------------------------------------
+
+        chiefComplaint:
+        chiefComplaintController.text.trim(),
+
+        duration:
+        durationController.text.trim(),
+
+        //-----------------------------------------------------
+        // OPQRST
+        //-----------------------------------------------------
+
+        onset:
+        onsetController.text.trim(),
+
+        provocation:
+        provocationController.text.trim(),
+
+        quality:
+        qualityController.text.trim(),
+
+        region:
+        regionController.text.trim(),
+
+        severity:
+        severityController.text.trim(),
+
+        timing:
+        timingController.text.trim(),
+
+        //-----------------------------------------------------
+        // SINSS
+        //-----------------------------------------------------
+
+        sinssSeverity:
+        sinssSeverityController.text.trim(),
+
+        irritability:
+        irritabilityController.text.trim(),
+
+        nature:
+        natureController.text.trim(),
+
+        stage:
+        stageController.text.trim(),
+
+        stability:
+        stabilityController.text.trim(),
+
+        //-----------------------------------------------------
+        // Origin
+        //-----------------------------------------------------
+
+        origins:
+        List<String>.from(
+          selectedOrigins,
+        ),
+
+        //-----------------------------------------------------
+        // Assessment
+        //-----------------------------------------------------
 
         biomechanicalFindings:
         biomechanicalController.text.trim(),
@@ -778,6 +1704,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
         otherFindings:
         otherFindingsController.text.trim(),
+
+        //-----------------------------------------------------
+        // Treatment
+        //-----------------------------------------------------
 
         treatmentGoals:
         treatmentGoalController.text.trim(),
@@ -791,17 +1721,26 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         advice:
         adviceController.text.trim(),
 
+        //-----------------------------------------------------
+        // Payment
+        //-----------------------------------------------------
+
         paymentAmount:
         paymentAmountController.text.trim(),
 
         paymentStatus:
         paymentStatus,
 
+        //-----------------------------------------------------
+        // Preserve Existing Session Note
+        //-----------------------------------------------------
+
+        sessionNote:
+        editingSession!.sessionNote,
       );
 
-
       //-------------------------------------------------------
-      // Update Firestore
+      // Update Session In Firestore
       //-------------------------------------------------------
 
       await sessionRepository.updateSession(
@@ -812,49 +1751,399 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       // Reload Previous Sessions
       //-------------------------------------------------------
 
-      sessions = await sessionRepository
-          .getPatientSessions(selectedPatient!.id!);
+      sessions =
+      await sessionRepository.getPatientSessions(
+        selectedPatient!.id!,
+      );
 
       //-------------------------------------------------------
-      // Exit Edit Mode
+      // Exit Editing Mode
       //-------------------------------------------------------
 
       isEditing = false;
 
       editingSession = null;
 
-      clearForm();
+      //-------------------------------------------------------
+      // Reload Latest Session
+      //-------------------------------------------------------
+
+      final latestSession =
+      await sessionRepository.getLatestSession(
+        selectedPatient!.id!,
+      );
+
+      //-------------------------------------------------------
+      // Check Widget Still Exists
+      //-------------------------------------------------------
+
+      if (!mounted) {
+        return;
+      }
+
+      //-------------------------------------------------------
+      // Restore Latest Session Into Main Form
+      //-------------------------------------------------------
+
+      if (latestSession != null) {
+        populateForm(
+          latestSession,
+        );
+      } else {
+        clearForm();
+      }
+
+      //-------------------------------------------------------
+      // Refresh UI
+      //-------------------------------------------------------
 
       setState(() {});
 
       //-------------------------------------------------------
-      // Success
+      // Success Message
       //-------------------------------------------------------
 
       ScaffoldMessenger.of(context).showSnackBar(
-
         const SnackBar(
-
           content: Text(
             "Session Updated Successfully",
           ),
-
         ),
-
       );
-
     } catch (e) {
+      //-------------------------------------------------------
+      // Error Handling
+      //-------------------------------------------------------
+
+      if (!mounted) {
+        return;
+      }
 
       ScaffoldMessenger.of(context).showSnackBar(
-
         SnackBar(
-          content: Text(e.toString()),
+          content: Text(
+            "Failed to update session: $e",
+          ),
         ),
-
       );
+    }
+  }
 
+  Future<void> showAddSessionDialog() async {
+
+    // Always start with empty note
+    sessionNoteController.clear();
+
+    await showDialog(
+      context: context,
+
+      barrierDismissible: false,
+
+      builder: (dialogContext) {
+
+        return AlertDialog(
+
+          shape: RoundedRectangleBorder(
+            borderRadius:
+            BorderRadius.circular(18),
+          ),
+
+          title: const Row(
+            children: [
+
+              Icon(
+                Icons.note_add_outlined,
+              ),
+
+              SizedBox(width: 10),
+
+              Text(
+                "Add Session",
+              ),
+
+            ],
+          ),
+
+          content: SizedBox(
+            width: 520,
+
+            child: TextFormField(
+
+              controller:
+              sessionNoteController,
+
+              autofocus: true,
+
+              maxLines: 8,
+
+              decoration: InputDecoration(
+
+                labelText:
+                "Session Note *",
+
+                hintText:
+                "Enter session note...",
+
+                alignLabelWithHint:
+                true,
+
+                border:
+                OutlineInputBorder(
+
+                  borderRadius:
+                  BorderRadius.circular(12),
+
+                ),
+
+              ),
+
+            ),
+          ),
+
+          actions: [
+
+            TextButton(
+
+              onPressed: () {
+
+                Navigator.pop(
+                  dialogContext,
+                );
+
+              },
+
+              child: const Text(
+                "Cancel",
+              ),
+
+            ),
+
+
+            FilledButton.icon(
+
+              icon: const Icon(
+                Icons.save_outlined,
+              ),
+
+              label: const Text(
+                "Save Session",
+              ),
+
+              onPressed: () async {
+
+                final note =
+                sessionNoteController
+                    .text
+                    .trim();
+
+
+                //=================================
+                // Session Note Validation
+                //=================================
+
+                if (note.isEmpty) {
+
+                  ScaffoldMessenger.of(context)
+                      .showSnackBar(
+
+                    const SnackBar(
+                      content: Text(
+                        "Please enter Session Note.",
+                      ),
+                    ),
+
+                  );
+
+                  return;
+                }
+
+
+                //=================================
+                // Close Dialog
+                //=================================
+
+                Navigator.pop(
+                  dialogContext,
+                );
+
+
+                //=================================
+                // Save Complete Session
+                //=================================
+
+                await saveNewSession(
+                  note,
+                );
+
+              },
+
+            ),
+
+          ],
+
+        );
+
+      },
+
+    );
+  }
+
+  Future<void> cancelSessionEditing() async {
+    isEditing = false;
+    editingSession = null;
+
+    if (selectedPatient == null) {
+      clearForm();
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      return;
     }
 
+    final latestSession =
+    await sessionRepository.getLatestSession(
+      selectedPatient!.id!,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (latestSession != null) {
+      populateForm(latestSession);
+    } else {
+      clearForm();
+    }
+
+    setState(() {});
+  }
+
+
+  Future<bool> updateSessionNoteOnly({
+    required SessionModel session,
+    required String updatedNote,
+  }) async {
+    try {
+      if (session.id == null) {
+        throw Exception(
+          "Session ID is missing.",
+        );
+      }
+
+      if (selectedPatient == null) {
+        throw Exception(
+          "No patient selected.",
+        );
+      }
+
+      //==========================================================
+      // Update Session Note Only
+      //==========================================================
+
+      await sessionRepository.updateSessionNote(
+        sessionId: session.id!,
+        sessionNote: updatedNote,
+      );
+
+      //==========================================================
+      // Reload Previous Sessions
+      //==========================================================
+
+      sessions =
+      await sessionRepository.getPatientSessions(
+        selectedPatient!.id!,
+      );
+
+      if (!mounted) {
+        return false;
+      }
+
+      setState(() {});
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "Session ${session.sessionNumber} Note Updated Successfully",
+          ),
+        ),
+      );
+
+      return true;
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Failed to update session note: $e",
+            ),
+          ),
+        );
+      }
+
+      return false;
+    }
+  }
+
+  Future<void> handleAddSession() async {
+
+    if (selectedPatient == null) {
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Please select a patient first.",
+          ),
+        ),
+      );
+
+      return;
+    }
+
+
+    //=========================================
+    // Validate Form
+    //=========================================
+
+    final isFormValid =
+        consultationFormKey.currentState?.validate()
+            ?? false;
+
+
+    //=========================================
+    // Validate Origin
+    //=========================================
+
+    final isOriginValid =
+        selectedOrigins.isNotEmpty;
+
+
+    if (!isFormValid || !isOriginValid) {
+
+      String message =
+          "Please fill all required consultation fields.";
+
+      if (!isOriginValid) {
+        message =
+        "Please select at least one Origin.";
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+        ),
+      );
+
+      return;
+    }
+
+
+    //=========================================
+    // Open Session Dialog
+    //=========================================
+
+    await showAddSessionDialog();
   }
   @override
   void dispose() {
@@ -880,6 +2169,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     homeExerciseController.dispose();
     adviceController.dispose();
     paymentAmountController.dispose();
+    sessionNoteController.dispose();
+
 
     super.dispose();
 
@@ -1264,23 +2555,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       ],
     );
   }
-  Widget _buildMultilineField(
-      String label,
-      TextEditingController controller, {
-        int maxLines = 3,
-      }) {
-    return TextFormField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        alignLabelWithHint: true,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-    );
-  }
+
   Widget _buildPatientWorkspace() {
 
     if (selectedPatient == null) {
@@ -1330,6 +2605,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     return SingleChildScrollView(
 
       padding: const EdgeInsets.all(20),
+        child: Form(
+          key: consultationFormKey,
 
       child: Column(
 
@@ -1465,11 +2742,27 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 SizedBox(
                   width: 420,
                   child: TextFormField(
-                    controller: chiefComplaintController,
+                    controller:
+                    chiefComplaintController,
+
+                    autovalidateMode:
+                    AutovalidateMode.onUserInteraction,
+
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return "Chief Complaint is required";
+                      }
+
+                      return null;
+                    },
+
                     decoration: InputDecoration(
-                      labelText: "Chief Complaint",
+                      labelText: "Chief Complaint *",
+
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius:
+                        BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -1480,11 +2773,27 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 SizedBox(
                   width: 220,
                   child: TextFormField(
-                    controller: durationController,
+                    controller:
+                    durationController,
+
+                    autovalidateMode:
+                    AutovalidateMode.onUserInteraction,
+
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return "Duration is required";
+                      }
+
+                      return null;
+                    },
+
                     decoration: InputDecoration(
-                      labelText: "Duration",
+                      labelText: "Duration *",
+
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius:
+                        BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -1813,16 +3122,49 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
-                SizedBox(
-                  width: 250,
+                //==================================================
+                // Payment Amount
+                //==================================================
+
+                Expanded(
                   child: TextFormField(
                     controller: paymentAmountController,
+
                     keyboardType: TextInputType.number,
+
+                    autovalidateMode:
+                    AutovalidateMode.onUserInteraction,
+
+                    validator: (value) {
+                      if (value == null ||
+                          value.trim().isEmpty) {
+                        return "Payment Amount is required";
+                      }
+
+                      final amount =
+                      double.tryParse(value.trim());
+
+                      if (amount == null) {
+                        return "Enter a valid amount";
+                      }
+
+                      if (amount < 0) {
+                        return "Amount cannot be negative";
+                      }
+
+                      return null;
+                    },
+
                     decoration: InputDecoration(
-                      labelText: "Amount Paid",
-                      prefixIcon: const Icon(Icons.currency_rupee),
+                      labelText: "Amount Paid *",
+
+                      prefixIcon: const Icon(
+                        Icons.currency_rupee,
+                      ),
+
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius:
+                        BorderRadius.circular(12),
                       ),
                     ),
                   ),
@@ -1830,19 +3172,28 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                 const SizedBox(width: 20),
 
-                SizedBox(
-                  width: 250,
+                //==================================================
+                // Payment Status
+                //==================================================
+
+                Expanded(
                   child: DropdownButtonFormField<String>(
                     value: paymentStatus,
+
                     decoration: InputDecoration(
                       labelText: "Payment Status",
-                      prefixIcon: const Icon(Icons.payments_outlined),
+
+                      prefixIcon: const Icon(
+                        Icons.payments_outlined,
+                      ),
+
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius:
+                        BorderRadius.circular(12),
                       ),
                     ),
-                    items: const [
 
+                    items: const [
                       DropdownMenuItem(
                         value: "Completed",
                         child: Text("Completed"),
@@ -1852,11 +3203,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         value: "Pending",
                         child: Text("Pending"),
                       ),
-
                     ],
+
                     onChanged: (value) {
+                      if (value == null) return;
+
                       setState(() {
-                        paymentStatus = value!;
+                        paymentStatus = value;
                       });
                     },
                   ),
@@ -1871,285 +3224,447 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
-            title: "Previous Sessions (${sessions.length})",
-            icon: Icons.history_outlined,
-            initiallyExpanded: false,
+            title:
+            "Previous Sessions (${sessions.length})",
 
-            child: sessions.isEmpty
+            icon:
+            Icons.history_outlined,
 
-            //--------------------------------------------------
-            // Empty State
-            //--------------------------------------------------
+            initiallyExpanded:
+            false,
 
-                ? Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Column(
-                children: [
+            child: Column(
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
 
-                  Icon(
-                    Icons.folder_open_outlined,
-                    size: 60,
-                    color: Colors.grey,
-                  ),
+              children: [
 
-                  SizedBox(height: 15),
+                //=========================================
+                // Add Session Button
+                //=========================================
 
-                  Text(
-                    "No Previous Sessions",
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
+                Row(
+                  mainAxisAlignment:
+                  MainAxisAlignment.end,
+
+                  children: [
+
+                    FilledButton.icon(
+
+                      onPressed: isEditing
+                          ? null
+                          : handleAddSession,
+
+
+                      icon: const Icon(
+                        Icons.add_rounded,
+                      ),
+
+                      label: const Text(
+                        "Add Session",
+                      ),
+
                     ),
+
+                  ],
+                ),
+
+
+                const SizedBox(height: 16),
+
+
+                //=========================================
+                // Empty State
+                //=========================================
+
+                if (sessions.isEmpty)
+
+                  Container(
+                    width:
+                    double.infinity,
+
+                    padding:
+                    const EdgeInsets.all(40),
+
+                    decoration:
+                    BoxDecoration(
+
+                      color:
+                      Colors.grey.shade100,
+
+                      borderRadius:
+                      BorderRadius.circular(12),
+
+                    ),
+
+                    child:
+                    const Column(
+
+                      children: [
+
+                        Icon(
+                          Icons.folder_open_outlined,
+                          size: 60,
+                          color: Colors.grey,
+                        ),
+
+                        SizedBox(height: 15),
+
+                        Text(
+                          "No Previous Sessions",
+
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight:
+                            FontWeight.w600,
+                          ),
+                        ),
+
+                      ],
+
+                    ),
+                  )
+
+
+                //=========================================
+                // Sessions List
+                //=========================================
+
+                else
+
+                  ListView.separated(
+
+                    shrinkWrap:
+                    true,
+
+                    physics:
+                    const NeverScrollableScrollPhysics(),
+
+                    itemCount:
+                    sessions.length,
+
+                    separatorBuilder:
+                        (_, __) =>
+                    const SizedBox(
+                      height: 12,
+                    ),
+
+                    itemBuilder:
+                        (context, index) {
+
+                      final session =
+                      sessions[index];
+
+                      return PreviousSessionCard(
+
+                        session:
+                        session,
+
+                        onTap: () {
+                          showSessionNoteDialog(session);
+                        },
+
+                        //=================================
+                        // Edit
+                        //=================================
+
+                        onEdit: () {
+
+                          loadSession(session);
+                        },
+
+
+                        //=================================
+                        // View
+                        //=================================
+
+                        onView: () {
+
+                          Navigator.push(
+
+                            context,
+
+                            MaterialPageRoute(
+
+                              builder: (_) =>
+                                  SessionDetailsScreen(
+
+                                    session:
+                                    session,
+
+                                  ),
+
+                            ),
+
+                          );
+
+                        },
+
+
+                        //=================================
+                        // PDF
+                        //=================================
+
+                        onPdf: () async {
+
+                          await PdfService.instance
+                              .generateSessionPdf(
+
+                            session,
+
+                          );
+
+                        },
+
+
+                        //=================================
+                        // Delete
+                        //=================================
+
+                        onDelete: () async {
+
+                          final confirm =
+                          await showDialog<bool>(
+
+                            context:
+                            context,
+
+                            builder:
+                                (_) =>
+                                AlertDialog(
+
+                                  title:
+                                  const Text(
+                                    "Delete Session",
+                                  ),
+
+                                  content:
+                                  const Text(
+                                    "Are you sure you want to delete this session?",
+                                  ),
+
+                                  actions: [
+
+                                    TextButton(
+
+                                      onPressed:
+                                          () {
+
+                                        Navigator.pop(
+                                          context,
+                                          false,
+                                        );
+
+                                      },
+
+                                      child:
+                                      const Text(
+                                        "Cancel",
+                                      ),
+
+                                    ),
+
+                                    FilledButton(
+
+                                      onPressed:
+                                          () {
+
+                                        Navigator.pop(
+                                          context,
+                                          true,
+                                        );
+
+                                      },
+
+                                      child:
+                                      const Text(
+                                        "Delete",
+                                      ),
+
+                                    ),
+
+                                  ],
+
+                                ),
+
+                          );
+
+
+                          if (confirm != true) {
+                            return;
+                          }
+
+
+                          await sessionRepository
+                              .deleteSession(
+
+                            session.id!,
+
+                          );
+
+
+                          sessions =
+                          await sessionRepository
+                              .getPatientSessions(
+
+                            selectedPatient!.id!,
+
+                          );
+
+
+                          if (!mounted) {
+                            return;
+                          }
+
+
+                          setState(() {});
+
+
+                          ScaffoldMessenger.of(context)
+                              .showSnackBar(
+
+                            const SnackBar(
+
+                              content:
+                              Text(
+                                "Session Deleted Successfully",
+                              ),
+
+                            ),
+
+                          );
+
+                        },
+
+                      );
+
+                    },
+
                   ),
 
-                ],
-              ),
-            )
-
-            //--------------------------------------------------
-            // Previous Sessions List
-            //--------------------------------------------------
-
-                : ListView.separated(
-
-              shrinkWrap: true,
-
-              physics:
-              const NeverScrollableScrollPhysics(),
-
-              itemCount: sessions.length,
-
-              separatorBuilder: (_, __) =>
-              const SizedBox(height: 12),
-
-              itemBuilder: (context, index) {
-
-                final session = sessions[index];
-
-                return PreviousSessionCard(
-
-                  session: session,
-
-                  //------------------------------------------------
-                  // Edit
-                  //------------------------------------------------
-
-                  onEdit: () {
-
-                    loadSession(session);
-
-                  },
-
-                  //------------------------------------------------
-                  // View
-                  //------------------------------------------------
-
-                  onView: () {
-
-                    Navigator.push(
-
-                      context,
-
-                      MaterialPageRoute(
-
-                        builder: (_) =>
-
-                            SessionDetailsScreen(
-
-                              session: session,
-
-                            ),
-
-                      ),
-
-                    );
-
-                  },
-
-                  //------------------------------------------------
-                  // PDF
-                  //------------------------------------------------
-
-                  onPdf: () async {
-
-                    await PdfService.instance
-                        .generateSessionPdf(
-                      session,
-                    );
-
-                  },
-
-                  //------------------------------------------------
-                  // Delete
-                  //------------------------------------------------
-
-                  onDelete: () async {
-
-                    final confirm =
-                    await showDialog<bool>(
-
-                      context: context,
-
-                      builder: (_) => AlertDialog(
-
-                        title: const Text(
-                          "Delete Session",
-                        ),
-
-                        content: const Text(
-                          "Are you sure you want to delete this session?",
-                        ),
-
-                        actions: [
-
-                          TextButton(
-
-                            onPressed: () {
-
-                              Navigator.pop(
-                                context,
-                                false,
-                              );
-
-                            },
-
-                            child: const Text(
-                              "Cancel",
-                            ),
-
-                          ),
-
-                          FilledButton(
-
-                            onPressed: () {
-
-                              Navigator.pop(
-                                context,
-                                true,
-                              );
-
-                            },
-
-                            child: const Text(
-                              "Delete",
-                            ),
-
-                          ),
-
-                        ],
-
-                      ),
-
-                    );
-
-                    if (confirm != true) return;
-
-                    await sessionRepository
-                        .deleteSession(
-                      session.id!,
-                    );
-
-                    sessions =
-                    await sessionRepository
-                        .getPatientSessions(
-                      selectedPatient!.id!,
-                    );
-
-                    if (!mounted) return;
-
-                    setState(() {});
-
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(
-
-                      const SnackBar(
-
-                        content: Text(
-                          "Session Deleted Successfully",
-                        ),
-
-                      ),
-
-                    );
-
-                  },
-
-                );
-
-              },
-
+              ],
             ),
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: 20),
+
+//==========================================================
+// Consultation Action Row
+//==========================================================
+
+          Row(
+            children: [
+              //========================================================
+              // Complete Consultation
+              //========================================================
+
+              Expanded(
+                flex: isEditing ? 2 : 1,
+
+                child: SizedBox(
+                  height: 55,
+
+                  child: FilledButton.icon(
+                    onPressed: completeConsultation,
+
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+
+                    icon: const Icon(
+                      Icons.task_alt_rounded,
+                    ),
+
+                    label: const Text(
+                      "Complete Consultation",
+
+                      style: TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              //========================================================
+              // Editing Controls
+              //========================================================
+
+              if (isEditing) ...[
+                const SizedBox(width: 12),
+
+                Expanded(
+                  child: SizedBox(
+                    height: 55,
+
+                    child: FilledButton.icon(
+                      onPressed: updateSession,
+
+                      style: FilledButton.styleFrom(
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                      ),
+
+                      icon: const Icon(
+                        Icons.edit_document,
+                      ),
+
+                      label: Text(
+                        "Update Session ${editingSession?.sessionNumber ?? ""}",
+
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 12),
+
+                SizedBox(
+                  width: 55,
+                  height: 55,
+
+                  child: IconButton.outlined(
+                    tooltip: "Cancel Editing",
+
+                    onPressed: cancelSessionEditing,
+
+                    style: IconButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+
+                    icon: const Icon(
+                      Icons.close_rounded,
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+
+          const SizedBox(height: 40),
 
 //==================================================
 // Save Session
 //==================================================
 
-          SizedBox(
-
-            width: double.infinity,
-
-            height: 55,
-
-            child: FilledButton.icon(
-
-              icon: Icon(
-
-                isEditing
-                    ? Icons.edit_document
-                    : Icons.save,
-
-              ),
-
-              label: Text(
-
-                isEditing
-                    ? "Update Session"
-                    : "Save Session",
-
-                style: const TextStyle(
-
-                  fontSize: 18,
-
-                  fontWeight: FontWeight.bold,
-
-                ),
-
-              ),
-
-              onPressed: selectedPatient == null
-                  ? null
-                  : () {
-
-                if (isEditing) {
-
-                  updateSession();
-
-                } else {
-
-                  saveSession();
-
-                }
-
-              },
-
-            ),
-
-          ),
 
           const SizedBox(height: 40),
 
         ],
 
       ),
+
+        ),
 
     );
 
