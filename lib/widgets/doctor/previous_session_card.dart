@@ -55,8 +55,10 @@ class PreviousSessionCard extends StatelessWidget {
               CircleAvatar(
                 radius: 24,
                 backgroundColor: Colors.blue.shade100,
+
                 child: Text(
                   "${session.sessionNumber}",
+
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
@@ -66,7 +68,7 @@ class PreviousSessionCard extends StatelessWidget {
               const SizedBox(width: 15),
 
               //------------------------------------------------
-              // Details
+              // Session Details
               //------------------------------------------------
 
               Expanded(
@@ -76,31 +78,53 @@ class PreviousSessionCard extends StatelessWidget {
 
                   children: [
 
+                    //------------------------------------------------
+                    // Session Title
+                    //------------------------------------------------
+
                     Text(
                       "Session ${session.sessionNumber}",
+
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 7),
+
+                    //------------------------------------------------
+                    // Session Save Date
+                    //
+                    // Example:
+                    // 8th July 2026
+                    //------------------------------------------------
 
                     Row(
                       children: [
 
                         const Icon(
-                          Icons.calendar_today,
-                          size: 14,
+                          Icons.calendar_month_outlined,
+                          size: 15,
                           color: Colors.grey,
                         ),
 
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 6),
 
-                        Text(
-                          session.sessionDate,
-                          style: const TextStyle(
-                            color: Colors.grey,
+                        Flexible(
+                          child: Text(
+                            session.saveDate.isEmpty
+                                ? session.sessionDate
+                                : session.saveDate,
+
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+
+                            overflow:
+                            TextOverflow.ellipsis,
                           ),
                         ),
 
@@ -109,11 +133,19 @@ class PreviousSessionCard extends StatelessWidget {
 
                     const SizedBox(height: 12),
 
+                    //------------------------------------------------
+                    // Payment Information
+                    //------------------------------------------------
+
                     Wrap(
                       spacing: 10,
                       runSpacing: 8,
 
                       children: [
+
+                        //------------------------------------------------
+                        // Payment Amount
+                        //------------------------------------------------
 
                         Container(
                           padding:
@@ -124,6 +156,7 @@ class PreviousSessionCard extends StatelessWidget {
 
                           decoration: BoxDecoration(
                             color: Colors.blue.shade50,
+
                             borderRadius:
                             BorderRadius.circular(20),
                           ),
@@ -153,6 +186,10 @@ class PreviousSessionCard extends StatelessWidget {
                             ],
                           ),
                         ),
+
+                        //------------------------------------------------
+                        // Payment Status
+                        //------------------------------------------------
 
                         Container(
                           padding:
@@ -193,8 +230,7 @@ class PreviousSessionCard extends StatelessWidget {
                                 session.paymentStatus,
 
                                 style: TextStyle(
-                                  fontWeight:
-                                  FontWeight.bold,
+                                  fontWeight: FontWeight.bold,
 
                                   color: completed
                                       ? Colors.green
@@ -214,7 +250,7 @@ class PreviousSessionCard extends StatelessWidget {
               ),
 
               //------------------------------------------------
-              // Menu
+              // Session Actions Menu
               //------------------------------------------------
 
               PopupMenuButton<String>(
@@ -244,8 +280,13 @@ class PreviousSessionCard extends StatelessWidget {
 
                 itemBuilder: (_) => const [
 
+                  //------------------------------------------------
+                  // Edit Session
+                  //------------------------------------------------
+
                   PopupMenuItem(
                     value: "edit",
+
                     child: Row(
                       children: [
                         Icon(Icons.edit),
@@ -255,8 +296,13 @@ class PreviousSessionCard extends StatelessWidget {
                     ),
                   ),
 
+                  //------------------------------------------------
+                  // View Session
+                  //------------------------------------------------
+
                   PopupMenuItem(
                     value: "view",
+
                     child: Row(
                       children: [
                         Icon(Icons.visibility),
@@ -266,8 +312,13 @@ class PreviousSessionCard extends StatelessWidget {
                     ),
                   ),
 
+                  //------------------------------------------------
+                  // Generate PDF
+                  //------------------------------------------------
+
                   PopupMenuItem(
                     value: "pdf",
+
                     child: Row(
                       children: [
                         Icon(Icons.picture_as_pdf),
@@ -277,8 +328,13 @@ class PreviousSessionCard extends StatelessWidget {
                     ),
                   ),
 
+                  //------------------------------------------------
+                  // Delete Session
+                  //------------------------------------------------
+
                   PopupMenuItem(
                     value: "delete",
+
                     child: Row(
                       children: [
                         Icon(Icons.delete),

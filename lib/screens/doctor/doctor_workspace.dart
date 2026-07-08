@@ -918,10 +918,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
   Future<void> saveNewSession(
       String sessionNote,
+      DateTime selectedSessionDate,
       ) async {
-
     try {
-
       //=========================================
       // Safety Validation
       //=========================================
@@ -930,251 +929,200 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         return;
       }
 
+      final patient = selectedPatient!;
 
-      final patient =
-      selectedPatient!;
+      //=========================================
+      // Actual Save Timestamp
+      //=========================================
 
+      final now = DateTime.now();
+
+      //=========================================
+      // Selected Clinical Session Date
+      //=========================================
+
+      final sessionDate =
+      DateFormat('yyyy-MM-dd').format(
+        selectedSessionDate,
+      );
+
+      // Example: 8th July 2026
+
+      final formattedSaveDate =
+      formatSessionSaveDate(
+        selectedSessionDate,
+      );
 
       //=========================================
       // Get Next Session Number
       //=========================================
 
       final sessionNumber =
-      await sessionRepository
-          .getNextSessionNumber(
+      await sessionRepository.getNextSessionNumber(
         patient.id!,
       );
-
 
       //=========================================
       // Create Complete Session Snapshot
       //=========================================
 
-      final session =
-      SessionModel(
+      final session = SessionModel(
+        patientId: patient.id!,
 
-        patientId:
-        patient.id!,
-
-        queueId:
-        selectedQueue?.id ?? "",
-
+        queueId: selectedQueue?.id ?? "",
 
         //=======================================
         // Patient Information
         //=======================================
 
-        patientCode:
-        patient.patientCode,
+        patientCode: patient.patientCode,
 
-        patientName:
-        patient.name,
+        patientName: patient.name,
 
-        phone:
-        patient.phone,
+        phone: patient.phone,
 
-        age:
-        patient.age,
+        age: patient.age,
 
-        gender:
-        patient.gender,
+        gender: patient.gender,
 
-        address:
-        patient.address,
-
+        address: patient.address,
 
         //=======================================
         // Session Information
         //=======================================
 
-        sessionNumber:
-        sessionNumber,
+        sessionNumber: sessionNumber,
 
-        sessionDate:
-        DateFormat(
-          'yyyy-MM-dd',
-        ).format(
-          DateTime.now(),
-        ),
+        // Doctor-selected date
+        // Example: 2026-07-08
 
-        createdAt:
-        DateTime.now(),
+        sessionDate: sessionDate,
 
+        // Doctor-selected formatted date
+        // Example: 8th July 2026
+
+        saveDate: formattedSaveDate,
+
+        // Actual time when record was created
+
+        createdAt: now,
 
         //=======================================
         // History
         //=======================================
 
         chiefComplaint:
-        chiefComplaintController
-            .text
-            .trim(),
+        chiefComplaintController.text.trim(),
 
         duration:
-        durationController
-            .text
-            .trim(),
-
+        durationController.text.trim(),
 
         //=======================================
         // OPQRST
         //=======================================
 
         onset:
-        onsetController
-            .text
-            .trim(),
+        onsetController.text.trim(),
 
         provocation:
-        provocationController
-            .text
-            .trim(),
+        provocationController.text.trim(),
 
         quality:
-        qualityController
-            .text
-            .trim(),
+        qualityController.text.trim(),
 
         region:
-        regionController
-            .text
-            .trim(),
+        regionController.text.trim(),
 
         severity:
-        severityController
-            .text
-            .trim(),
+        severityController.text.trim(),
 
         timing:
-        timingController
-            .text
-            .trim(),
-
+        timingController.text.trim(),
 
         //=======================================
         // SINSS
         //=======================================
 
         sinssSeverity:
-        sinssSeverityController
-            .text
-            .trim(),
+        sinssSeverityController.text.trim(),
 
         irritability:
-        irritabilityController
-            .text
-            .trim(),
+        irritabilityController.text.trim(),
 
         nature:
-        natureController
-            .text
-            .trim(),
+        natureController.text.trim(),
 
         stage:
-        stageController
-            .text
-            .trim(),
+        stageController.text.trim(),
 
         stability:
-        stabilityController
-            .text
-            .trim(),
-
+        stabilityController.text.trim(),
 
         //=======================================
         // Origin
         //=======================================
 
-        origins:
-        List<String>.from(
+        origins: List<String>.from(
           selectedOrigins,
         ),
-
 
         //=======================================
         // Assessment
         //=======================================
 
         biomechanicalFindings:
-        biomechanicalController
-            .text
-            .trim(),
+        biomechanicalController.text.trim(),
 
         osteopathicFindings:
-        osteopathicController
-            .text
-            .trim(),
+        osteopathicController.text.trim(),
 
         otherFindings:
-        otherFindingsController
-            .text
-            .trim(),
-
+        otherFindingsController.text.trim(),
 
         //=======================================
         // Treatment
         //=======================================
 
         treatmentGoals:
-        treatmentGoalController
-            .text
-            .trim(),
+        treatmentGoalController.text.trim(),
 
         treatmentGiven:
-        treatmentGivenController
-            .text
-            .trim(),
+        treatmentGivenController.text.trim(),
 
         homeExerciseProgram:
-        homeExerciseController
-            .text
-            .trim(),
+        homeExerciseController.text.trim(),
 
         advice:
-        adviceController
-            .text
-            .trim(),
-
+        adviceController.text.trim(),
 
         //=======================================
         // Payment
         //=======================================
 
         paymentAmount:
-        paymentAmountController
-            .text
-            .trim(),
+        paymentAmountController.text.trim(),
 
-        paymentStatus:
-        paymentStatus,
-
+        paymentStatus: paymentStatus,
 
         //=======================================
         // Session Note
         //=======================================
 
-        sessionNote:
-        sessionNote,
-
+        sessionNote: sessionNote,
       );
-
 
       //=========================================
       // Save Session
       //=========================================
-
-      //=========================================
-// Save Session
-//=========================================
 
       final savedSessionId =
       await sessionRepository.saveSession(
         session,
       );
 
-//=========================================
-// Track Current Queue Visit Session
-//=========================================
+      //=========================================
+      // Track Current Queue Visit Session
+      //=========================================
 
       sessionSavedForCurrentQueueVisit = true;
 
@@ -1192,11 +1140,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       //=========================================
 
       sessions =
-      await sessionRepository
-          .getPatientSessions(
+      await sessionRepository.getPatientSessions(
         patient.id!,
       );
-
 
       //=========================================
       // Prepare Form For Next Session
@@ -1206,57 +1152,46 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         session,
       );
 
-
       if (!mounted) {
         return;
       }
 
+      //=========================================
+      // Refresh UI
+      //=========================================
 
       setState(() {});
-
 
       //=========================================
       // Success Message
       //=========================================
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Session $sessionNumber Saved Successfully",
+            "Session $sessionNumber Saved Successfully for $formattedSaveDate",
           ),
         ),
-
       );
-
     } catch (e) {
-
       if (!mounted) {
         return;
       }
 
-      ScaffoldMessenger.of(context)
-          .showSnackBar(
-
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             "Failed to save session: $e",
           ),
         ),
-
       );
-
     }
-
   }
-
   void prepareFormAfterSessionSave(
       SessionModel savedSession,
       ) {
-
     //=========================================
-    // Carry Forward Clinical Information
+    // Carry Forward History
     //=========================================
 
     chiefComplaintController.text =
@@ -1265,6 +1200,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     durationController.text =
         savedSession.duration;
 
+    //=========================================
+    // Carry Forward OPQRST
+    //=========================================
 
     onsetController.text =
         savedSession.onset;
@@ -1284,6 +1222,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     timingController.text =
         savedSession.timing;
 
+    //=========================================
+    // Carry Forward SINSS
+    //=========================================
 
     sinssSeverityController.text =
         savedSession.sinssSeverity;
@@ -1300,12 +1241,18 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     stabilityController.text =
         savedSession.stability;
 
+    //=========================================
+    // Carry Forward Origin
+    //=========================================
 
     selectedOrigins =
     List<String>.from(
       savedSession.origins,
     );
 
+    //=========================================
+    // Carry Forward Assessment
+    //=========================================
 
     biomechanicalController.text =
         savedSession.biomechanicalFindings;
@@ -1316,36 +1263,40 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     otherFindingsController.text =
         savedSession.otherFindings;
 
+    //=========================================
+    // Carry Forward Rx Goal / Advice
+    //=========================================
+
+    treatmentGoalController.text =
+        savedSession.treatmentGoals;
+
+    treatmentGivenController.text =
+        savedSession.treatmentGiven;
+
+    homeExerciseController.text =
+        savedSession.homeExerciseProgram;
+
+    adviceController.text =
+        savedSession.advice;
 
     //=========================================
-    // Clear Session-Specific Information
+    // Clear ONLY Payment Information
     //=========================================
-
-    treatmentGoalController.clear();
-
-    treatmentGivenController.clear();
-
-    homeExerciseController.clear();
-
-    adviceController.clear();
 
     paymentAmountController.clear();
 
-    paymentStatus =
-    "Completed";
+    paymentStatus = "Completed";
+
+    //=========================================
+    // Clear Session Note
+    //
+    // Session note is entered in Add Session
+    // dialog, so old note should not carry
+    // forward into the next session.
+    //=========================================
 
     sessionNoteController.clear();
-
-
-    //=========================================
-    // Reset Form Validation State
-    //=========================================
-
-    AutovalidateMode consultationAutoValidate =
-        AutovalidateMode.disabled;
-
   }
-
   Future<void> showSessionNoteDialog(
       SessionModel session,
       ) async {
@@ -1353,12 +1304,20 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       text: session.sessionNote,
     );
 
-    bool isEditingNote = false;
+    // Parse existing machine-friendly date.
+    // Example: 2026-07-08
+
+    DateTime selectedSessionDate =
+        DateTime.tryParse(session.sessionDate) ??
+            DateTime.now();
+
+    bool isEditingSession = false;
     bool isUpdating = false;
 
     await showDialog(
       context: context,
       barrierDismissible: false,
+
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
@@ -1368,7 +1327,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
               ),
 
               //=========================================
-              // Title + Cross Close Button
+              // Title + Close Button
               //=========================================
 
               title: Row(
@@ -1381,17 +1340,21 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                   Expanded(
                     child: Text(
-                      "Session ${session.sessionNumber} Note",
+                      "Session ${session.sessionNumber}",
                     ),
                   ),
 
                   IconButton(
                     tooltip: "Close",
+
                     onPressed: isUpdating
                         ? null
                         : () {
-                      Navigator.pop(dialogContext);
+                      Navigator.pop(
+                        dialogContext,
+                      );
                     },
+
                     icon: const Icon(
                       Icons.close_rounded,
                     ),
@@ -1400,35 +1363,139 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
               ),
 
               //=========================================
-              // Session Note Field
+              // Dialog Content
               //=========================================
 
               content: SizedBox(
                 width: 520,
-                child: TextFormField(
-                  controller: controller,
 
-                  readOnly: !isEditingNote,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
 
-                  autofocus: isEditingNote,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
 
-                  maxLines: 8,
+                  children: [
+                    //===================================
+                    // Session Date
+                    //===================================
 
-                  decoration: InputDecoration(
-                    labelText: "Session Note",
-
-                    alignLabelWithHint: true,
-
-                    filled: !isEditingNote,
-
-                    fillColor: !isEditingNote
-                        ? Colors.grey.shade100
-                        : null,
-
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                    const Text(
+                      "Session Date",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
+
+                    const SizedBox(height: 8),
+
+                    InkWell(
+                      borderRadius:
+                      BorderRadius.circular(12),
+
+                      // Date picker only enabled
+                      // while editing.
+
+                      onTap: !isEditingSession ||
+                          isUpdating
+                          ? null
+                          : () async {
+                        final pickedDate =
+                        await showDatePicker(
+                          context: dialogContext,
+
+                          initialDate:
+                          selectedSessionDate,
+
+                          firstDate:
+                          DateTime(2020),
+
+                          lastDate:
+                          DateTime(2100),
+                        );
+
+                        if (pickedDate == null) {
+                          return;
+                        }
+
+                        setDialogState(() {
+                          selectedSessionDate =
+                              pickedDate;
+                        });
+                      },
+
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.calendar_month_outlined,
+                          ),
+
+                          suffixIcon: isEditingSession
+                              ? const Icon(
+                            Icons
+                                .keyboard_arrow_down_rounded,
+                          )
+                              : null,
+
+                          filled: !isEditingSession,
+
+                          fillColor: !isEditingSession
+                              ? Colors.grey.shade100
+                              : null,
+
+                          border: OutlineInputBorder(
+                            borderRadius:
+                            BorderRadius.circular(12),
+                          ),
+                        ),
+
+                        child: Text(
+                          formatSessionSaveDate(
+                            selectedSessionDate,
+                          ),
+
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    //===================================
+                    // Session Note
+                    //===================================
+
+                    TextFormField(
+                      controller: controller,
+
+                      readOnly: !isEditingSession,
+
+                      autofocus: isEditingSession,
+
+                      maxLines: 8,
+
+                      decoration: InputDecoration(
+                        labelText: "Session Note",
+
+                        alignLabelWithHint: true,
+
+                        filled: !isEditingSession,
+
+                        fillColor: !isEditingSession
+                            ? Colors.grey.shade100
+                            : null,
+
+                        border: OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -1446,12 +1513,14 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         ? const SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(
+
+                      child:
+                      CircularProgressIndicator(
                         strokeWidth: 2,
                       ),
                     )
                         : Icon(
-                      isEditingNote
+                      isEditingSession
                           ? Icons.update_outlined
                           : Icons.edit_outlined,
                     ),
@@ -1459,29 +1528,29 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                     label: Text(
                       isUpdating
                           ? "Updating..."
-                          : isEditingNote
-                          ? "Update Session Note"
-                          : "Edit Session Note",
+                          : isEditingSession
+                          ? "Update Session"
+                          : "Edit Session",
                     ),
 
                     onPressed: isUpdating
                         ? null
                         : () async {
-                      //=================================
-                      // Enable Edit Mode
-                      //=================================
+                      //=============================
+                      // Enable Editing
+                      //=============================
 
-                      if (!isEditingNote) {
+                      if (!isEditingSession) {
                         setDialogState(() {
-                          isEditingNote = true;
+                          isEditingSession = true;
                         });
 
                         return;
                       }
 
-                      //=================================
-                      // Validate Updated Note
-                      //=================================
+                      //=============================
+                      // Validate Note
+                      //=============================
 
                       final updatedNote =
                       controller.text.trim();
@@ -1499,31 +1568,66 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         return;
                       }
 
-                      //=================================
-                      // Do Nothing If Note Unchanged
-                      //=================================
+                      //=============================
+                      // Calculate Updated Dates
+                      //=============================
 
-                      if (updatedNote ==
-                          session.sessionNote) {
+                      final updatedSessionDate =
+                      DateFormat('yyyy-MM-dd')
+                          .format(
+                        selectedSessionDate,
+                      );
+
+                      final updatedSaveDate =
+                      formatSessionSaveDate(
+                        selectedSessionDate,
+                      );
+
+                      //=============================
+                      // Check Whether Anything Changed
+                      //=============================
+
+                      final noteChanged =
+                          updatedNote !=
+                              session.sessionNote;
+
+                      final dateChanged =
+                          updatedSessionDate !=
+                              session.sessionDate;
+
+                      if (!noteChanged &&
+                          !dateChanged) {
                         setDialogState(() {
-                          isEditingNote = false;
+                          isEditingSession = false;
                         });
 
                         return;
                       }
 
+                      //=============================
+                      // Start Loading
+                      //=============================
+
                       setDialogState(() {
                         isUpdating = true;
                       });
 
-                      //=================================
-                      // Update Note Only
-                      //=================================
+                      //=============================
+                      // Update Note + Date
+                      //=============================
 
                       final success =
-                      await updateSessionNoteOnly(
+                      await updateSessionNoteAndDate(
                         session: session,
-                        updatedNote: updatedNote,
+
+                        updatedNote:
+                        updatedNote,
+
+                        updatedSessionDate:
+                        updatedSessionDate,
+
+                        updatedSaveDate:
+                        updatedSaveDate,
                       );
 
                       if (!dialogContext.mounted) {
@@ -1531,7 +1635,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       }
 
                       if (success) {
-                        Navigator.pop(dialogContext);
+                        Navigator.pop(
+                          dialogContext,
+                        );
+
                         return;
                       }
 
@@ -1626,9 +1733,16 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         sessionNumber:
         editingSession!.sessionNumber,
 
+        // Keep original session date
         sessionDate:
         editingSession!.sessionDate,
 
+        // Keep original save date
+        // Example: 8th July 2026
+        saveDate:
+        editingSession!.saveDate,
+
+        // Keep original creation timestamp
         createdAt:
         editingSession!.createdAt,
 
@@ -1830,164 +1944,252 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   }
 
   Future<void> showAddSessionDialog() async {
+    //=========================================
+    // Always Start With Empty Session Note
+    //=========================================
 
-    // Always start with empty note
     sessionNoteController.clear();
+
+    //=========================================
+    // Default Session Date = Today
+    //=========================================
+
+    DateTime selectedSessionDate = DateTime.now();
 
     await showDialog(
       context: context,
-
       barrierDismissible: false,
 
       builder: (dialogContext) {
-
-        return AlertDialog(
-
-          shape: RoundedRectangleBorder(
-            borderRadius:
-            BorderRadius.circular(18),
-          ),
-
-          title: const Row(
-            children: [
-
-              Icon(
-                Icons.note_add_outlined,
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(18),
               ),
 
-              SizedBox(width: 10),
+              //=========================================
+              // Title
+              //=========================================
 
-              Text(
-                "Add Session",
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.note_add_outlined,
+                  ),
+
+                  SizedBox(width: 10),
+
+                  Text(
+                    "Add Session",
+                  ),
+                ],
               ),
 
-            ],
-          ),
+              //=========================================
+              // Dialog Content
+              //=========================================
 
-          content: SizedBox(
-            width: 520,
+              content: SizedBox(
+                width: 520,
 
-            child: TextFormField(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
 
-              controller:
-              sessionNoteController,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.start,
 
-              autofocus: true,
+                  children: [
+                    //===================================
+                    // Session Date Label
+                    //===================================
 
-              maxLines: 8,
-
-              decoration: InputDecoration(
-
-                labelText:
-                "Session Note *",
-
-                hintText:
-                "Enter session note...",
-
-                alignLabelWithHint:
-                true,
-
-                border:
-                OutlineInputBorder(
-
-                  borderRadius:
-                  BorderRadius.circular(12),
-
-                ),
-
-              ),
-
-            ),
-          ),
-
-          actions: [
-
-            TextButton(
-
-              onPressed: () {
-
-                Navigator.pop(
-                  dialogContext,
-                );
-
-              },
-
-              child: const Text(
-                "Cancel",
-              ),
-
-            ),
-
-
-            FilledButton.icon(
-
-              icon: const Icon(
-                Icons.save_outlined,
-              ),
-
-              label: const Text(
-                "Save Session",
-              ),
-
-              onPressed: () async {
-
-                final note =
-                sessionNoteController
-                    .text
-                    .trim();
-
-
-                //=================================
-                // Session Note Validation
-                //=================================
-
-                if (note.isEmpty) {
-
-                  ScaffoldMessenger.of(context)
-                      .showSnackBar(
-
-                    const SnackBar(
-                      content: Text(
-                        "Please enter Session Note.",
+                    const Text(
+                      "Session Date *",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
 
-                  );
+                    const SizedBox(height: 8),
 
-                  return;
-                }
+                    //===================================
+                    // Session Date Picker
+                    //===================================
 
+                    InkWell(
+                      borderRadius:
+                      BorderRadius.circular(12),
 
-                //=================================
-                // Close Dialog
-                //=================================
+                      onTap: () async {
+                        final pickedDate =
+                        await showDatePicker(
+                          context: dialogContext,
 
-                Navigator.pop(
-                  dialogContext,
-                );
+                          initialDate:
+                          selectedSessionDate,
 
+                          firstDate:
+                          DateTime(2020),
 
-                //=================================
-                // Save Complete Session
-                //=================================
+                          lastDate:
+                          DateTime(2100),
+                        );
 
-                await saveNewSession(
-                  note,
-                );
+                        if (pickedDate == null) {
+                          return;
+                        }
 
-              },
+                        setDialogState(() {
+                          selectedSessionDate =
+                              pickedDate;
+                        });
+                      },
 
-            ),
+                      child: InputDecorator(
+                        decoration: InputDecoration(
+                          prefixIcon: const Icon(
+                            Icons.calendar_month_outlined,
+                          ),
 
-          ],
+                          suffixIcon: const Icon(
+                            Icons.keyboard_arrow_down_rounded,
+                          ),
 
+                          border: OutlineInputBorder(
+                            borderRadius:
+                            BorderRadius.circular(12),
+                          ),
+                        ),
+
+                        child: Text(
+                          formatSessionSaveDate(
+                            selectedSessionDate,
+                          ),
+
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    //===================================
+                    // Session Note Field
+                    //===================================
+
+                    TextFormField(
+                      controller:
+                      sessionNoteController,
+
+                      autofocus: true,
+
+                      maxLines: 8,
+
+                      decoration: InputDecoration(
+                        labelText:
+                        "Session Note *",
+
+                        hintText:
+                        "Enter session note...",
+
+                        alignLabelWithHint: true,
+
+                        border: OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              //=========================================
+              // Actions
+              //=========================================
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(
+                      dialogContext,
+                    );
+                  },
+
+                  child: const Text(
+                    "Cancel",
+                  ),
+                ),
+
+                FilledButton.icon(
+                  icon: const Icon(
+                    Icons.save_outlined,
+                  ),
+
+                  label: const Text(
+                    "Save Session",
+                  ),
+
+                  onPressed: () async {
+                    final note =
+                    sessionNoteController.text.trim();
+
+                    //=================================
+                    // Session Note Validation
+                    //=================================
+
+                    if (note.isEmpty) {
+                      ScaffoldMessenger.of(context)
+                          .showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter Session Note.",
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    //=================================
+                    // Copy Values Before Closing Dialog
+                    //=================================
+
+                    final noteToSave = note;
+
+                    final dateToSave =
+                        selectedSessionDate;
+
+                    //=================================
+                    // Close Dialog
+                    //=================================
+
+                    Navigator.pop(
+                      dialogContext,
+                    );
+
+                    //=================================
+                    // Save Complete Session
+                    //=================================
+
+                    await saveNewSession(
+                      noteToSave,
+                      dateToSave,
+                    );
+                  },
+                ),
+              ],
+            );
+          },
         );
-
       },
-
     );
   }
-
   Future<void> cancelSessionEditing() async {
     isEditing = false;
     editingSession = null;
@@ -2020,17 +2222,26 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     setState(() {});
   }
 
-
-  Future<bool> updateSessionNoteOnly({
+  Future<bool> updateSessionNoteAndDate({
     required SessionModel session,
     required String updatedNote,
+    required String updatedSessionDate,
+    required String updatedSaveDate,
   }) async {
     try {
+      //=========================================
+      // Validate Session
+      //=========================================
+
       if (session.id == null) {
         throw Exception(
           "Session ID is missing.",
         );
       }
+
+      //=========================================
+      // Validate Selected Patient
+      //=========================================
 
       if (selectedPatient == null) {
         throw Exception(
@@ -2038,34 +2249,51 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         );
       }
 
-      //==========================================================
-      // Update Session Note Only
-      //==========================================================
+      //=========================================
+      // Update Session Note + Dates
+      //=========================================
 
-      await sessionRepository.updateSessionNote(
+      await sessionRepository.updateSessionNoteAndDate(
         sessionId: session.id!,
+
         sessionNote: updatedNote,
+
+        sessionDate: updatedSessionDate,
+
+        saveDate: updatedSaveDate,
       );
 
-      //==========================================================
+      //=========================================
       // Reload Previous Sessions
-      //==========================================================
+      //=========================================
 
       sessions =
       await sessionRepository.getPatientSessions(
         selectedPatient!.id!,
       );
 
+      //=========================================
+      // Check Widget Still Exists
+      //=========================================
+
       if (!mounted) {
         return false;
       }
 
+      //=========================================
+      // Refresh UI
+      //=========================================
+
       setState(() {});
+
+      //=========================================
+      // Success Message
+      //=========================================
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            "Session ${session.sessionNumber} Note Updated Successfully",
+            "Session ${session.sessionNumber} Updated Successfully",
           ),
         ),
       );
@@ -2076,7 +2304,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              "Failed to update session note: $e",
+              "Failed to update session: $e",
             ),
           ),
         );
@@ -2085,6 +2313,38 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       return false;
     }
   }
+  String getOrdinalDay(int day) {
+    if (day >= 11 && day <= 13) {
+      return "${day}th";
+    }
+
+    switch (day % 10) {
+      case 1:
+        return "${day}st";
+
+      case 2:
+        return "${day}nd";
+
+      case 3:
+        return "${day}rd";
+
+      default:
+        return "${day}th";
+    }
+  }
+
+  String formatSessionSaveDate(DateTime date) {
+    final ordinalDay =
+    getOrdinalDay(date.day);
+
+    final monthYear =
+    DateFormat('MMMM yyyy').format(date);
+
+    return "$ordinalDay $monthYear";
+  }
+
+
+
 
   Future<void> handleAddSession() async {
 
@@ -3255,7 +3515,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           ? null
                           : handleAddSession,
 
-
                       icon: const Icon(
                         Icons.add_rounded,
                       ),
@@ -3332,205 +3591,332 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                 else
 
-                  ListView.separated(
+                  Builder(
+                    builder: (context) {
 
-                    shrinkWrap:
-                    true,
+                      //=====================================
+                      // Create Copy Of Sessions
+                      //
+                      // Do not directly sort the original
+                      // sessions list inside build().
+                      //=====================================
 
-                    physics:
-                    const NeverScrollableScrollPhysics(),
-
-                    itemCount:
-                    sessions.length,
-
-                    separatorBuilder:
-                        (_, __) =>
-                    const SizedBox(
-                      height: 12,
-                    ),
-
-                    itemBuilder:
-                        (context, index) {
-
-                      final session =
-                      sessions[index];
-
-                      return PreviousSessionCard(
-
-                        session:
-                        session,
-
-                        onTap: () {
-                          showSessionNoteDialog(session);
-                        },
-
-                        //=================================
-                        // Edit
-                        //=================================
-
-                        onEdit: () {
-
-                          loadSession(session);
-                        },
+                      final sortedSessions =
+                      List<SessionModel>.from(
+                        sessions.cast<SessionModel>(),
+                      );
 
 
-                        //=================================
-                        // View
-                        //=================================
+                      //=====================================
+                      // Sort Sessions
+                      //
+                      // Primary:
+                      // sessionDate DESCENDING
+                      //
+                      // 3rd July
+                      // 2nd July
+                      // 1st July
+                      //
+                      // Secondary:
+                      // Higher sessionNumber first when
+                      // dates are equal.
+                      //=====================================
 
-                        onView: () {
+                      sortedSessions.sort(
+                            (a, b) {
 
-                          Navigator.push(
+                          final aDate =
+                          DateTime.tryParse(
+                            a.sessionDate,
+                          );
 
-                            context,
+                          final bDate =
+                          DateTime.tryParse(
+                            b.sessionDate,
+                          );
 
-                            MaterialPageRoute(
 
-                              builder: (_) =>
-                                  SessionDetailsScreen(
+                          //=================================
+                          // Handle Invalid / Empty Dates
+                          //=================================
 
-                                    session:
-                                    session,
+                          if (aDate == null &&
+                              bDate == null) {
 
-                                  ),
+                            return b.sessionNumber.compareTo(
+                              a.sessionNumber,
+                            );
+                          }
 
-                            ),
 
+                          if (aDate == null) {
+                            return 1;
+                          }
+
+
+                          if (bDate == null) {
+                            return -1;
+                          }
+
+
+                          //=================================
+                          // Compare Session Dates
+                          //=================================
+
+                          final dateComparison =
+                          bDate.compareTo(
+                            aDate,
+                          );
+
+
+                          //=================================
+                          // Different Dates
+                          //=================================
+
+                          if (dateComparison != 0) {
+                            return dateComparison;
+                          }
+
+
+                          //=================================
+                          // Same Date
+                          //
+                          // Higher Session Number First
+                          //=================================
+
+                          return b.sessionNumber.compareTo(
+                            a.sessionNumber,
                           );
 
                         },
+                      );
 
 
-                        //=================================
-                        // PDF
-                        //=================================
+                      //=====================================
+                      // Display Sorted Sessions
+                      //=====================================
 
-                        onPdf: () async {
+                      return ListView.separated(
 
-                          await PdfService.instance
-                              .generateSessionPdf(
+                        shrinkWrap:
+                        true,
 
+                        physics:
+                        const NeverScrollableScrollPhysics(),
+
+                        itemCount:
+                        sortedSessions.length,
+
+                        separatorBuilder:
+                            (_, __) =>
+                        const SizedBox(
+                          height: 12,
+                        ),
+
+                        itemBuilder:
+                            (context, index) {
+
+                          final session =
+                          sortedSessions[index];
+
+
+                          return PreviousSessionCard(
+
+                            session:
                             session,
 
-                          );
 
-                        },
+                            //=================================
+                            // Open Session Note
+                            //=================================
+
+                            onTap: () {
+
+                              showSessionNoteDialog(
+                                session,
+                              );
+
+                            },
 
 
-                        //=================================
-                        // Delete
-                        //=================================
+                            //=================================
+                            // Edit Session
+                            //=================================
 
-                        onDelete: () async {
+                            onEdit: () {
 
-                          final confirm =
-                          await showDialog<bool>(
+                              loadSession(
+                                session,
+                              );
 
-                            context:
-                            context,
+                            },
 
-                            builder:
-                                (_) =>
-                                AlertDialog(
 
-                                  title:
-                                  const Text(
-                                    "Delete Session",
-                                  ),
+                            //=================================
+                            // View Session
+                            //=================================
 
-                                  content:
-                                  const Text(
-                                    "Are you sure you want to delete this session?",
-                                  ),
+                            onView: () {
 
-                                  actions: [
+                              Navigator.push(
 
-                                    TextButton(
+                                context,
 
-                                      onPressed:
-                                          () {
+                                MaterialPageRoute(
 
-                                        Navigator.pop(
-                                          context,
-                                          false,
-                                        );
+                                  builder: (_) =>
+                                      SessionDetailsScreen(
 
-                                      },
+                                        session:
+                                        session,
 
-                                      child:
-                                      const Text(
-                                        "Cancel",
                                       ),
-
-                                    ),
-
-                                    FilledButton(
-
-                                      onPressed:
-                                          () {
-
-                                        Navigator.pop(
-                                          context,
-                                          true,
-                                        );
-
-                                      },
-
-                                      child:
-                                      const Text(
-                                        "Delete",
-                                      ),
-
-                                    ),
-
-                                  ],
 
                                 ),
 
-                          );
+                              );
+
+                            },
 
 
-                          if (confirm != true) {
-                            return;
-                          }
+                            //=================================
+                            // Generate PDF
+                            //=================================
+
+                            onPdf: () async {
+
+                              await PdfService.instance
+                                  .generateSessionPdf(
+
+                                session,
+
+                              );
+
+                            },
 
 
-                          await sessionRepository
-                              .deleteSession(
+                            //=================================
+                            // Delete Session
+                            //=================================
 
-                            session.id!,
+                            onDelete: () async {
 
-                          );
+                              final confirm =
+                              await showDialog<bool>(
+
+                                context:
+                                context,
+
+                                builder:
+                                    (_) =>
+                                    AlertDialog(
+
+                                      title:
+                                      const Text(
+                                        "Delete Session",
+                                      ),
+
+                                      content:
+                                      const Text(
+                                        "Are you sure you want to delete this session?",
+                                      ),
+
+                                      actions: [
+
+                                        TextButton(
+
+                                          onPressed:
+                                              () {
+
+                                            Navigator.pop(
+                                              context,
+                                              false,
+                                            );
+
+                                          },
+
+                                          child:
+                                          const Text(
+                                            "Cancel",
+                                          ),
+
+                                        ),
+
+                                        FilledButton(
+
+                                          onPressed:
+                                              () {
+
+                                            Navigator.pop(
+                                              context,
+                                              true,
+                                            );
+
+                                          },
+
+                                          child:
+                                          const Text(
+                                            "Delete",
+                                          ),
+
+                                        ),
+
+                                      ],
+
+                                    ),
+
+                              );
 
 
-                          sessions =
-                          await sessionRepository
-                              .getPatientSessions(
-
-                            selectedPatient!.id!,
-
-                          );
+                              if (confirm != true) {
+                                return;
+                              }
 
 
-                          if (!mounted) {
-                            return;
-                          }
+                              await sessionRepository
+                                  .deleteSession(
+
+                                session.id!,
+
+                              );
 
 
-                          setState(() {});
+                              //=================================
+                              // Reload Sessions
+                              //=================================
+
+                              sessions =
+                              await sessionRepository
+                                  .getPatientSessions(
+
+                                selectedPatient!.id!,
+
+                              );
 
 
-                          ScaffoldMessenger.of(context)
-                              .showSnackBar(
+                              if (!mounted) {
+                                return;
+                              }
 
-                            const SnackBar(
 
-                              content:
-                              Text(
-                                "Session Deleted Successfully",
-                              ),
+                              setState(() {});
 
-                            ),
+
+                              ScaffoldMessenger.of(context)
+                                  .showSnackBar(
+
+                                const SnackBar(
+
+                                  content:
+                                  Text(
+                                    "Session Deleted Successfully",
+                                  ),
+
+                                ),
+
+                              );
+
+                            },
 
                           );
 
@@ -3539,7 +3925,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       );
 
                     },
-
                   ),
 
               ],

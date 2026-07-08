@@ -1,27 +1,4 @@
 {
-  "flutter": {
-    "platforms": {
-      "android": {
-        "default": {
-          "projectId": "clinic-management-cc484",
-          "appId": "1:483341389734:android:e183337d1ec01718d50967",
-          "fileOutput": "android/app/google-services.json"
-        }
-      },
-      "dart": {
-        "lib/firebase_options.dart": {
-          "projectId": "clinic-management-cc484",
-          "configurations": {
-            "android": "1:483341389734:android:e183337d1ec01718d50967",
-            "ios": "1:483341389734:ios:8e98a1414b408e2cd50967",
-            "macos": "1:483341389734:ios:8e98a1414b408e2cd50967",
-            "web": "1:483341389734:web:38d6eefc4513546ad50967",
-            "windows": "1:483341389734:web:38d6eefc4513546ad50967"
-          }
-        }
-      }
-    }
-  },
   "hosting": {
     "public": "build/web",
     "ignore": [

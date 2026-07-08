@@ -203,23 +203,29 @@ class SessionRepository {
   }
 
   //=========================================================
-// Update Session Note Only
+// Update Session Note  and date
 //=========================================================
 
-  Future<void> updateSessionNote({
+  Future<void> updateSessionNoteAndDate({
     required String sessionId,
     required String sessionNote,
+    required String sessionDate,
+    required String saveDate,
   }) async {
-
     await sessions
         .doc(sessionId)
         .update({
-
+      // Updated Session Note
       "sessionNote": sessionNote,
 
+      // Machine-Friendly Selected Date
+      // Example: 2026-07-08
+      "sessionDate": sessionDate,
+
+      // Human-Readable Selected Date
+      // Example: 8th July 2026
+      "saveDate": saveDate,
     });
-
   }
-
 
 }

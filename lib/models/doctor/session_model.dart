@@ -110,6 +110,8 @@ class SessionModel {
 
   final String sessionNote;
 
+  final String saveDate;
+
   //==================================================
   // Constructor
   //==================================================
@@ -160,6 +162,7 @@ class SessionModel {
     required this.paymentAmount,
     required this.paymentStatus,
     required this.sessionNote,
+    required this.saveDate
 
   });
 
@@ -213,6 +216,7 @@ class SessionModel {
     String? paymentAmount,
     String? paymentStatus,
     String? sessionNote,
+    String? saveDate,
 
 
   }) {
@@ -297,6 +301,9 @@ class SessionModel {
       sessionNote:
       sessionNote ?? this.sessionNote,
 
+      saveDate:
+        saveDate ?? this.saveDate,
+
     );
 
   }
@@ -363,6 +370,7 @@ class SessionModel {
 
       "paymentStatus": paymentStatus,
       "sessionNote": sessionNote,
+      "saveDate" : saveDate,
 
     };
 
@@ -460,6 +468,11 @@ class SessionModel {
 
       sessionNote:
       map["sessionNote"] ?? "",
+
+      saveDate:
+      map["saveDate"] ??
+          map["sessionDate"] ??
+          "",
 
     );
 
