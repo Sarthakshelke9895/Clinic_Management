@@ -464,7 +464,7 @@ class SessionModel {
       map["paymentAmount"] ?? "",
 
       paymentStatus:
-      map["paymentStatus"] ?? "Completed",
+      map["paymentStatus"] ?? "Pending",
 
       sessionNote:
       map["sessionNote"] ?? "",

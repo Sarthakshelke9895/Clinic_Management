@@ -6,7 +6,7 @@ import '../../repositories/queue_repository.dart';
 import 'patient_workspace.dart';
 import '../../repositories/doctor/session_repository.dart';
 import '../../services/pdf/pdf_service.dart';
-import '../../models/doctor/session_model.dart';
+import '../../services/auth/auth_service.dart';
 
 
 
@@ -192,25 +192,40 @@ class _CompletedPatientsScreenState
               ),
               child: Row(
                 children: [
-                  IconButton(
-                    tooltip: "Back",
-                    icon: const Icon(Icons.arrow_back),
-                    onPressed: () {
-                      if (Navigator.canPop(context)) {
-                        Navigator.pop(context);
-                      }
-                    },
+                  //--------------------------------------------------
+                  // Back Button
+                  //--------------------------------------------------
+
+                  SizedBox(
+                    width: 45,
+                    height: 45,
+                    child: IconButton(
+                      tooltip: "Back",
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () {
+                        if (Navigator.canPop(context)) {
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
                   ),
 
-                  Expanded(
+                  const SizedBox(width: 10),
+
+                  //--------------------------------------------------
+                  // Date Filter
+                  //--------------------------------------------------
+
+                  SizedBox(
+                    width: 700,
+                    height: 45,
                     child: Container(
-                      height: 50,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                         border: Border.all(
                           color: Colors.grey.shade300,
                         ),
@@ -219,10 +234,9 @@ class _CompletedPatientsScreenState
                         onTap: pickDate,
                         child: Row(
                           children: [
-
                             const Icon(
                               Icons.calendar_today,
-                              size: 20,
+                              size: 19,
                             ),
 
                             const SizedBox(width: 10),
@@ -241,49 +255,83 @@ class _CompletedPatientsScreenState
                             const Icon(
                               Icons.keyboard_arrow_down,
                             ),
-
                           ],
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(width: 12),
+                  //--------------------------------------------------
+                  // Push Right Side Controls To End
+                  //--------------------------------------------------
+
+                  const Spacer(),
+
+                  //--------------------------------------------------
+                  // Completed Patient Count
+                  //--------------------------------------------------
 
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
+                    width: 200,
+                    height: 45,
+                    alignment: Alignment.center,
                     decoration: BoxDecoration(
                       color: Colors.green.shade50,
-                      borderRadius:
-                      BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-
                         Icon(
                           Icons.check_circle,
                           size: 18,
                           color: Colors.green.shade700,
                         ),
 
-                        const SizedBox(width: 6),
+                        const SizedBox(width: 8),
 
                         Text(
-                          "${filteredPatients.length}",
+                          "${filteredPatients.length} Completed",
                           style: TextStyle(
                             color: Colors.green.shade700,
                             fontWeight: FontWeight.bold,
-                            fontSize: 18,
+                            fontSize: 14,
                           ),
                         ),
-
                       ],
                     ),
                   ),
 
+                  const SizedBox(width: 10),
+
+                  //--------------------------------------------------
+                  // Refresh Button
+                  //--------------------------------------------------
+
+                  SizedBox(
+                    width: 45,
+                    height: 45,
+                    child: IconButton(
+                      tooltip: "Refresh Completed Patients",
+                      onPressed: () {
+                        // Add your existing refresh/load method here
+                      },
+                      icon: const Icon(
+                        Icons.refresh_rounded,
+                        size: 22,
+                      ),
+                      style: IconButton.styleFrom(
+                        foregroundColor: Colors.green.shade700,
+                        backgroundColor: Colors.white,
+                        side: BorderSide(
+                          color: Colors.grey.shade300,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -405,463 +453,455 @@ class _CompletedPatientsScreenState
 //==========================================================
 // Patient Card
 //==========================================================
-
   Widget buildPatientCard(QueueModel patient) {
-
     final bool paymentCompleted =
         patient.paymentStatus == "Completed";
 
     return Container(
-
       margin: const EdgeInsets.only(
         left: 16,
         right: 16,
         bottom: 8,
       ),
-
       padding: const EdgeInsets.symmetric(
         horizontal: 14,
         vertical: 10,
       ),
-
       decoration: BoxDecoration(
-
         color: Colors.white,
-
         borderRadius: BorderRadius.circular(16),
-
         border: Border.all(
           color: Colors.grey.shade200,
         ),
-
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.03),
+            color: Colors.black.withValues(alpha: .03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
-
       ),
-
       child: Row(
-
-        crossAxisAlignment: CrossAxisAlignment.start,
-
         children: [
-
           //--------------------------------------------------
           // Completed Icon
           //--------------------------------------------------
 
           Container(
-
             width: 40,
             height: 40,
-
             decoration: BoxDecoration(
-
               color: Colors.green.shade50,
-
               shape: BoxShape.circle,
-
             ),
-
             child: Icon(
-
               Icons.check,
-
               color: Colors.green.shade700,
-
             ),
-
           ),
 
           const SizedBox(width: 14),
 
           //--------------------------------------------------
-          // Information
+          // Patient Information
           //--------------------------------------------------
 
           Expanded(
-
             child: Column(
-
-              crossAxisAlignment:
-              CrossAxisAlignment.start,
-
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 //--------------------------------------------------
-                // NAME
+                // First Row
                 //--------------------------------------------------
 
                 Row(
-
                   children: [
+                    //--------------------------------------------------
+                    // Patient Name
+                    //--------------------------------------------------
 
                     Expanded(
-
                       child: Text(
-
                         patient.patientName,
-
                         maxLines: 1,
-
-                        overflow:
-                        TextOverflow.ellipsis,
-
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-
                           fontSize: 16,
-
-                          fontWeight:
-                          FontWeight.w700,
-
+                          fontWeight: FontWeight.w700,
                         ),
-
                       ),
-
                     ),
 
-                    Container(
+                    //--------------------------------------------------
+                    // Completed Time
+                    //--------------------------------------------------
 
-                      padding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-
-                      decoration: BoxDecoration(
-
-                        color:
-                        Colors.green.shade50,
-
-                        borderRadius:
-                        BorderRadius.circular(
-                            20),
-
-                        border: Border.all(
-                          color:
-                          Colors.green.shade200,
-                        ),
-
-                      ),
-
-                      child: Row(
-
-                        mainAxisSize:
-                        MainAxisSize.min,
-
+                    SizedBox(
+                      width: 85,
+                      child: patient.completedAt != null
+                          ? Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.end,
                         children: [
-
                           Icon(
-
-                            Icons.circle,
-
-                            size: 8,
-
-                            color:
-                            Colors.green.shade700,
-
-                          ),
-
-                          const SizedBox(width: 5),
-
-                          Text(
-
-                            "Completed",
-
-                            style: TextStyle(
-
-                              color:
-                              Colors.green.shade700,
-
-                              fontSize: 11,
-
-                              fontWeight:
-                              FontWeight.w600,
-
-                            ),
-
-                          ),
-
-                        ],
-
-                      ),
-
-                    ),
-
-                    const SizedBox(width: 10),
-
-                    if (patient.completedAt != null)
-
-                      Row(
-
-                        children: [
-
-                          Icon(
-
                             Icons.access_time,
-
-                            size: 15,
-
-                            color:
-                            Colors.grey.shade600,
-
+                            size: 14,
+                            color: Colors.grey.shade600,
                           ),
-
                           const SizedBox(width: 4),
-
                           Text(
-
-                            DateFormat("hh:mm a")
-                                .format(
+                            DateFormat(
+                              "hh:mm a",
+                            ).format(
                               patient.completedAt!,
                             ),
-
                             style: TextStyle(
-
-                              color:
-                              Colors.grey.shade700,
-
-                              fontSize: 12,
-
-                              fontWeight:
-                              FontWeight.w600,
-
+                              color: Colors.grey.shade700,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
                             ),
-
                           ),
-
                         ],
-
-                      ),
-
+                      )
+                          : const SizedBox(),
+                    ),
                   ],
-
                 ),
 
                 const SizedBox(height: 8),
 
                 //--------------------------------------------------
-                // SECOND LINE
+                // Second Row
                 //--------------------------------------------------
 
                 Row(
-
                   children: [
+                    //--------------------------------------------------
+                    // Patient Code + Phone
+                    //--------------------------------------------------
 
                     Expanded(
-
-                      child: Text(
-
-                        "${patient.patientCode} • 📞 ${patient.phone}",
-
-                        overflow:
-                        TextOverflow.ellipsis,
-
-                        style: TextStyle(
-
-                          color:
-                          Colors.grey.shade700,
-
-                          fontSize: 12,
-
-                        ),
-
-                      ),
-
-                    ),
-
-                    //--------------------------------------------------
-                    // View
-                    //--------------------------------------------------
-
-                    Tooltip(
-
-                      message: "View Patient",
-
-                      child: IconButton(
-
-                        visualDensity:
-                        VisualDensity.compact,
-
-                        splashRadius: 18,
-
-                        hoverColor:
-                        Colors.blue.withOpacity(.08),
-
-                        onPressed: () {
-
-                          Navigator.push(
-
-                            context,
-
-                            MaterialPageRoute(
-
-                              builder: (_) =>
-                                  PatientWorkspace(
-                                    patientId:
-                                    patient.patientId,
-                                  ),
-
+                      child: Row(
+                        children: [
+                          Text(
+                            patient.patientCode,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
                             ),
+                          ),
 
-                          );
+                          const SizedBox(width: 14),
 
-                        },
+                          Icon(
+                            Icons.phone_outlined,
+                            size: 14,
+                            color: Colors.grey.shade600,
+                          ),
 
-                        icon: const Icon(
+                          const SizedBox(width: 5),
 
-                          Icons.visibility_outlined,
+                          Text(
+                            patient.phone,
+                            style: TextStyle(
+                              color: Colors.grey.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
 
-                          color: Colors.blue,
+                          const SizedBox(width: 18),
 
-                          size: 20,
+                          //--------------------------------------------------
+                          // Assigned Doctor - Visible To Both Roles
+                          //--------------------------------------------------
 
-                        ),
+                          Icon(
+                            Icons.medical_services_outlined,
+                            size: 15,
+                            color: Colors.blue.shade700,
+                          ),
 
+                          const SizedBox(width: 5),
+
+                          Flexible(
+                            child: Text(
+                              patient.doctorName.isEmpty
+                                  ? "Doctor not assigned"
+                                  : patient.doctorName,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: patient.doctorName.isEmpty
+                                    ? Colors.grey.shade500
+                                    : Colors.blue.shade700,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-
                     ),
 
                     //--------------------------------------------------
-                    // PDF
+                    // View Patient
                     //--------------------------------------------------
 
-                    Tooltip(
-
-                      message: "Download PDF",
-
-                      child: IconButton(
-
-                        visualDensity:
-                        VisualDensity.compact,
-
-                        splashRadius: 18,
-
-                        hoverColor:
-                        Colors.red.withOpacity(.08),
-
-                        onPressed: () async {
-                          try {
-                            debugPrint("PDF BUTTON CLICKED");
-
-                            debugPrint("SESSION ID: ${patient.sessionId}");
-
-                            if (patient.sessionId == null ||
-                                patient.sessionId!.isEmpty) {
-                              debugPrint("PDF STOPPED: SESSION ID IS MISSING");
-                              return;
-                            }
-
-                            debugPrint("GET SESSION START");
-
-                            final session = await sessionRepository.getSession(
-                              patient.sessionId!,
+                    SizedBox(
+                      width: 45,
+                      child: Tooltip(
+                        message: "View Patient",
+                        child: IconButton(
+                          visualDensity: VisualDensity.compact,
+                          splashRadius: 18,
+                          hoverColor:
+                          Colors.blue.withValues(alpha: .08),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => PatientWorkspace(
+                                  patientId: patient.patientId,
+                                ),
+                              ),
                             );
-
-                            debugPrint("GET SESSION FINISHED");
-
-                            if (session == null) {
-                              debugPrint("PDF STOPPED: SESSION NOT FOUND");
-                              return;
-                            }
-
-                            debugPrint("CALLING PDF SERVICE");
-
-                            await PdfService.instance.generateSessionPdf(session);
-
-                            debugPrint("PDF SERVICE FINISHED");
-                          } catch (e, stackTrace) {
-                            debugPrint("PDF ERROR: $e");
-                            debugPrintStack(stackTrace: stackTrace);
-                          }
-                        },
-
-                        icon: const Icon(
-
-                          Icons.picture_as_pdf_outlined,
-
-                          color: Colors.red,
-
-                          size: 20,
-
+                          },
+                          icon: const Icon(
+                            Icons.visibility_outlined,
+                            color: Colors.blue,
+                            size: 20,
+                          ),
                         ),
-
                       ),
-
                     ),
 
                     //--------------------------------------------------
-                    // Payment
+                    // PDF - Doctor Only
+                    //--------------------------------------------------
+
+
+
+                    const SizedBox(width: 8),
+
+                    //--------------------------------------------------
+                    // Payment Amount
+                    // Visible For Doctor + Reception
                     //--------------------------------------------------
 
                     Container(
-
-                      margin:
-                      const EdgeInsets.only(
-                        left: 6,
-                      ),
-
-                      padding:
-                      const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-
+                      width: 100,
+                      height: 38,
+                      alignment: Alignment.center,
                       decoration: BoxDecoration(
-
-                        color: paymentCompleted
-                            ? Colors.green.shade50
-                            : Colors.orange.shade50,
-
-                        borderRadius:
-                        BorderRadius.circular(
-                            20),
-
-                      ),
-
-                      child: Text(
-
-                        patient.paymentAmount.isEmpty
-                            ? "₹0"
-                            : "₹${patient.paymentAmount}",
-
-                        style: TextStyle(
-
-                          color: paymentCompleted
-                              ? Colors.green.shade700
-                              : Colors.orange.shade700,
-
-                          fontWeight:
-                          FontWeight.bold,
-
-                          fontSize: 11,
-
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.blue.shade200,
                         ),
-
                       ),
+                      child: Row(
+                        mainAxisAlignment:
+                        MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.currency_rupee,
+                            size: 15,
+                            color: Colors.blue.shade800,
+                          ),
 
+                          const SizedBox(width: 2),
+
+                          Flexible(
+                            child: Text(
+                              patient.paymentAmount.isEmpty
+                                  ? "0"
+                                  : patient.paymentAmount,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: Colors.blue.shade800,
+                                fontSize: 13,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
 
+                    const SizedBox(width: 8),
+
+                    //--------------------------------------------------
+                    // Reception - Editable Payment Status
+                    //--------------------------------------------------
+
+                    if (AuthService.isReception)
+                      Container(
+                        width: 180,
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: paymentCompleted
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: paymentCompleted
+                                ? Colors.green.shade300
+                                : Colors.orange.shade300,
+                          ),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: paymentCompleted
+                                ? "Completed"
+                                : "Pending",
+                            isExpanded: true,
+                            icon: Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 20,
+                              color: paymentCompleted
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                            ),
+                            style: TextStyle(
+                              color: paymentCompleted
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            items: const [
+                              DropdownMenuItem<String>(
+                                value: "Pending",
+                                child: Text(
+                                  "Payment Pending",
+                                ),
+                              ),
+                              DropdownMenuItem<String>(
+                                value: "Completed",
+                                child: Text(
+                                  "Payment Completed",
+                                ),
+                              ),
+                            ],
+                            onChanged: (String? value) async {
+                              if (value == null || patient.id == null) {
+                                return;
+                              }
+
+                              try {
+                                debugPrint("QUEUE ID: ${patient.id}");
+                                debugPrint("SESSION ID: ${patient.sessionId}");
+                                debugPrint("NEW STATUS: $value");
+
+                                await queueRepository.updatePaymentStatus(
+                                  patient.id!,
+                                  value,
+                                );
+
+                                if (patient.sessionId != null &&
+                                    patient.sessionId!.isNotEmpty) {
+                                  await sessionRepository.updatePaymentStatus(
+                                    patient.sessionId!,
+                                    value,
+                                  );
+
+                                  debugPrint(
+                                    "SESSION PAYMENT UPDATED: ${patient.sessionId}",
+                                  );
+                                } else {
+                                  debugPrint("ERROR: SESSION ID IS EMPTY");
+                                }
+
+                                if (!mounted) return;
+
+                                await loadCompletedPatients();
+                              } catch (e) {
+                                debugPrint("PAYMENT UPDATE ERROR: $e");
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+
+                    //--------------------------------------------------
+                    // Doctor - Read Only Payment Status
+                    //--------------------------------------------------
+
+                    if (AuthService.isDoctor)
+                      Container(
+                        width: 180,
+                        height: 38,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: paymentCompleted
+                              ? Colors.green.shade50
+                              : Colors.orange.shade50,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(
+                            color: paymentCompleted
+                                ? Colors.green.shade300
+                                : Colors.orange.shade300,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              paymentCompleted
+                                  ? Icons.check_circle_outline
+                                  : Icons.schedule,
+                              size: 16,
+                              color: paymentCompleted
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                            ),
+
+                            const SizedBox(width: 6),
+
+                            Expanded(
+                              child: Text(
+                                paymentCompleted
+                                    ? "Payment Completed"
+                                    : "Payment Pending",
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: paymentCompleted
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 4),
+
+                            Icon(
+                              Icons.lock_outline,
+                              size: 15,
+                              color: paymentCompleted
+                                  ? Colors.green.shade700
+                                  : Colors.orange.shade700,
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
-
                 ),
-
               ],
-
             ),
-
           ),
-
         ],
-
       ),
-
     );
-
   }
 }
 

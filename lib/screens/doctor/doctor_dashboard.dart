@@ -299,7 +299,7 @@ const SizedBox(height: 30),
     children: [
 
       const Text(
-        "Today's Waiting Queue",
+        "Today's  Queue",
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.bold,
@@ -438,70 +438,48 @@ const SizedBox(height: 30),
   }
 
   Future<void> logout() async {
-
     final confirm = await showDialog<bool>(
-
       context: context,
-
-      builder: (_) => AlertDialog(
-
+      builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
         title: const Text("Logout"),
-
         content: const Text(
           "Are you sure you want to logout?",
         ),
-
         actions: [
-
           TextButton(
-
             onPressed: () {
-
-              Navigator.pop(context, false);
-
+              Navigator.pop(dialogContext, false);
             },
-
             child: const Text("Cancel"),
-
           ),
-
           FilledButton(
-
+            style: FilledButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
             onPressed: () {
-
-              Navigator.pop(context, true);
-
+              Navigator.pop(dialogContext, true);
             },
-
             child: const Text("Logout"),
-
           ),
-
         ],
-
       ),
-
     );
 
     if (confirm != true) return;
-
     if (!mounted) return;
 
     Navigator.pushAndRemoveUntil(
-
       context,
-
       MaterialPageRoute(
-
-        builder: (_) =>
-        const RoleSelectionScreen(),
-
+        builder: (_) => const RoleSelectionScreen(),
       ),
-
           (route) => false,
-
     );
-
   }
 //==========================================================
 // Analytics Card

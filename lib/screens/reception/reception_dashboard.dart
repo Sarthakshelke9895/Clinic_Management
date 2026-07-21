@@ -235,7 +235,8 @@ class _ReceptionDashboardState
                         },
 
                         child: InfoCard(
-                          title: "Today's Queue",
+                          title: "Today's"
+                              " Queue",
                           value: snapshot.data
                               ?.toString() ??
                               "0",
@@ -389,7 +390,7 @@ class _ReceptionDashboardState
             const SizedBox(height: 15),
 
             DashboardTile(
-              title: "Today's Queue",
+              title: " Queue",
               icon: Icons.queue,
               onTap: () {
                 Navigator.push(

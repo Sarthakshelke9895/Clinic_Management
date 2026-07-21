@@ -617,7 +617,7 @@ class _ReceptionPortalState
 
                       child: _navigationButton(
 
-                        title: "Today's Queue",
+                        title: "Waiting Queue",
 
                         icon: Icons.groups,
 

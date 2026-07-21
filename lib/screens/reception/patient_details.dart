@@ -301,6 +301,8 @@ const SizedBox(height: 24),
 
           phone: patient.phone,
 
+
+
           status: "Waiting",
 
           queueDate:

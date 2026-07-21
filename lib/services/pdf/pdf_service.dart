@@ -1,10 +1,9 @@
-import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
-import 'package:flutter/foundation.dart';
-import 'package:file_selector/file_selector.dart';
 
 import '../../models/doctor/session_model.dart';
 
@@ -13,107 +12,235 @@ class PdfService {
 
   static final PdfService instance = PdfService._();
 
+  static const PdfColor _primary = PdfColors.blue900;
+  static const PdfColor _border = PdfColors.blue100;
+  static const PdfColor _muted = PdfColors.grey700;
+  static const PdfColor _surface = PdfColors.grey100;
 
+  Future<pw.MemoryImage> _loadLogo() async {
+    final bytes =
+    (await rootBundle.load("lib/assets/images/logo.jpeg"))
+        .buffer
+        .asUint8List();
+    return pw.MemoryImage(bytes);
+  }
 
-
-
-  pw.Widget buildSectionTitle(
-      String title,
-      ) {
-    return pw.Container(
-      margin: const pw.EdgeInsets.only(
-        top: 15,
-        bottom: 10,
-      ),
-      child: pw.Row(
-        children: [
-
-          pw.Container(
-            width: 6,
-            height: 24,
-            color: PdfColors.blue900,
-          ),
-
-          pw.SizedBox(width: 10),
-
-          pw.Text(
-            title.toUpperCase(),
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blue900,
-            ),
-          ),
-
-          pw.SizedBox(width: 10),
-
-          pw.Expanded(
-            child: pw.Container(
-              height: 1,
-              color: PdfColors.blue200,
-            ),
-          ),
-
-        ],
-      ),
+  pw.PageTheme _pageTheme() {
+    return const pw.PageTheme(
+      pageFormat: PdfPageFormat.a4,
+      margin: pw.EdgeInsets.fromLTRB(34, 34, 34, 38),
     );
   }
 
-//==========================================================
-// Information Row
-//==========================================================
-
-  pw.Widget buildInfoRow(
-      String title,
-      String value,
+  pw.Widget _pageHeader(
+      pw.Context context,
+      pw.MemoryImage logo,
+      String reportTitle,
       ) {
     return pw.Container(
-      margin: const pw.EdgeInsets.only(bottom: 8),
-      padding: const pw.EdgeInsets.symmetric(
-        horizontal: 12,
-        vertical: 10,
-      ),
-      decoration: pw.BoxDecoration(
-        color: PdfColors.white,
-        border: pw.Border.all(
-          color: PdfColors.blue100,
-          width: 0.8,
+      padding: const pw.EdgeInsets.only(bottom: 12),
+      margin: const pw.EdgeInsets.only(bottom: 16),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(
+            color: _primary,
+            width: 1.2,
+          ),
         ),
-        borderRadius: pw.BorderRadius.circular(6),
       ),
       child: pw.Row(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
-
-          // Left Title
           pw.Container(
-            width: 130,
+            width: 54,
+            height: 54,
+            alignment: pw.Alignment.center,
+            child: pw.Image(
+              logo,
+              fit: pw.BoxFit.contain,
+            ),
+          ),
+          pw.SizedBox(width: 14),
+          pw.Expanded(
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  reportTitle,
+                  style: pw.TextStyle(
+                    fontSize: 16,
+                    fontWeight: pw.FontWeight.bold,
+                    color: _primary,
+                  ),
+                ),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  "Clinical Record",
+                  style: const pw.TextStyle(
+                    fontSize: 9,
+                    color: _muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          pw.Text(
+            "Page ${context.pageNumber} of ${context.pagesCount}",
+            style: const pw.TextStyle(
+              fontSize: 9,
+              color: _muted,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _pageFooter() {
+    return pw.Container(
+      padding: const pw.EdgeInsets.only(top: 8),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          top: pw.BorderSide(
+            color: _border,
+            width: .8,
+          ),
+        ),
+      ),
+      child: pw.Row(
+        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+        children: [
+          pw.Text(
+            "Confidential clinical document",
+            style: const pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.grey600,
+            ),
+          ),
+          pw.Text(
+            "Generated ${DateTime.now().toString().substring(0, 16)}",
+            style: const pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.grey600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _reportTitle(String title, String subtitle) {
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 14,
+      ),
+      decoration: pw.BoxDecoration(
+        color: _primary,
+        borderRadius: pw.BorderRadius.circular(7),
+      ),
+      child: pw.Column(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.Text(
+            title,
+            style: pw.TextStyle(
+              color: PdfColors.white,
+              fontSize: 15,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.SizedBox(height: 4),
+          pw.Text(
+            subtitle,
+            style: const pw.TextStyle(
+              color: PdfColors.blue100,
+              fontSize: 9,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  pw.Widget _sectionTitle(String title) {
+    return pw.Container(
+      margin: const pw.EdgeInsets.only(
+        top: 16,
+        bottom: 8,
+      ),
+      padding: const pw.EdgeInsets.only(
+        left: 9,
+        bottom: 5,
+      ),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          left: pw.BorderSide(
+            color: _primary,
+            width: 3,
+          ),
+          bottom: pw.BorderSide(
+            color: _border,
+            width: .7,
+          ),
+        ),
+      ),
+      child: pw.Text(
+        title.toUpperCase(),
+        style: pw.TextStyle(
+          fontSize: 11,
+          fontWeight: pw.FontWeight.bold,
+          color: _primary,
+          letterSpacing: .5,
+        ),
+      ),
+    );
+  }
+
+  pw.Widget _field(
+      String label,
+      String value, {
+        double labelWidth = 125,
+      }) {
+    final cleanValue =
+    value.trim().isEmpty ? "-" : value.trim();
+
+    return pw.Container(
+      padding: const pw.EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 7,
+      ),
+      decoration: const pw.BoxDecoration(
+        border: pw.Border(
+          bottom: pw.BorderSide(
+            color: PdfColors.grey300,
+            width: .5,
+          ),
+        ),
+      ),
+      child: pw.Row(
+        crossAxisAlignment: pw.CrossAxisAlignment.start,
+        children: [
+          pw.SizedBox(
+            width: labelWidth,
             child: pw.Text(
-              title,
+              label,
               style: pw.TextStyle(
-                fontSize: 11,
+                fontSize: 9.5,
                 fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blue900,
+                color: PdfColors.grey800,
               ),
             ),
           ),
-
-          // Divider
-          pw.Container(
-            width: 1,
-            height: 14,
-            color: PdfColors.blue100,
-          ),
-
           pw.SizedBox(width: 10),
-
-          // Value
           pw.Expanded(
             child: pw.Text(
-              value.trim().isEmpty ? "-" : value,
-              style: pw.TextStyle(
-                fontSize: 11,
+              cleanValue,
+              style: const pw.TextStyle(
+                fontSize: 9.5,
                 color: PdfColors.grey800,
+                lineSpacing: 2,
               ),
             ),
           ),
@@ -122,596 +249,363 @@ class PdfService {
     );
   }
 
+  pw.Widget _infoCard(List<pw.Widget> children) {
+    return pw.Container(
+      width: double.infinity,
+      decoration: pw.BoxDecoration(
+        color: PdfColors.white,
+        border: pw.Border.all(
+          color: PdfColors.grey300,
+          width: .7,
+        ),
+        borderRadius: pw.BorderRadius.circular(6),
+      ),
+      child: pw.Column(
+        children: children,
+      ),
+    );
+  }
+
+  pw.Widget _patientSummary(SessionModel session) {
+    return _infoCard([
+      _field("Patient Code", session.patientCode),
+      _field("Patient Name", session.patientName),
+      _field("Phone", session.phone),
+      _field("Age", session.age.toString()),
+      _field("Gender", session.gender),
+      _field("Address", session.address),
+    ]);
+  }
+
+  pw.Widget _originChips(SessionModel session) {
+    if (session.origins.isEmpty) {
+      return _infoCard([
+        _field("Origin", "-"),
+      ]);
+    }
+
+    return pw.Container(
+      width: double.infinity,
+      padding: const pw.EdgeInsets.all(10),
+      decoration: pw.BoxDecoration(
+        border: pw.Border.all(
+          color: PdfColors.grey300,
+          width: .7,
+        ),
+        borderRadius: pw.BorderRadius.circular(6),
+      ),
+      child: pw.Wrap(
+        spacing: 6,
+        runSpacing: 6,
+        children: session.origins.map((origin) {
+          return pw.Container(
+            padding: const pw.EdgeInsets.symmetric(
+              horizontal: 9,
+              vertical: 4,
+            ),
+            decoration: pw.BoxDecoration(
+              color: _surface,
+              borderRadius: pw.BorderRadius.circular(10),
+            ),
+            child: pw.Text(
+              origin,
+              style: const pw.TextStyle(
+                fontSize: 8.5,
+                color: PdfColors.grey800,
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  List<pw.Widget> _sessionContent(
+      SessionModel session, {
+        required bool showPatientInformation,
+      }) {
+    return [
+      if (showPatientInformation) ...[
+        _sectionTitle("Patient Information"),
+        _patientSummary(session),
+      ],
+
+      _sectionTitle("Session Information"),
+      _infoCard([
+        _field(
+          "Session Number",
+          session.sessionNumber.toString(),
+        ),
+        _field(
+          "Session Date",
+          session.sessionDate,
+        ),
+      ]),
+
+      _sectionTitle("History"),
+      _infoCard([
+        _field(
+          "Chief Complaint",
+          session.chiefComplaint,
+        ),
+        _field(
+          "Duration",
+          session.duration,
+        ),
+      ]),
+
+      _sectionTitle("OPQRST"),
+      _infoCard([
+        _field("Onset", session.onset),
+        _field(
+          "Provocation / Palliation",
+          session.provocation,
+        ),
+        _field("Quality", session.quality),
+        _field("Region / Radiation", session.region),
+        _field("Severity", session.severity),
+        _field("Timing", session.timing),
+      ]),
+
+      _sectionTitle("SINSS"),
+      _infoCard([
+        _field(
+          "Severity",
+          session.sinssSeverity,
+        ),
+        _field(
+          "Irritability",
+          session.irritability,
+        ),
+        _field("Nature", session.nature),
+        _field("Stage", session.stage),
+        _field(
+          "Stability",
+          session.stability,
+        ),
+      ]),
+
+      _sectionTitle("Origin"),
+      _originChips(session),
+
+      _sectionTitle("Assessment"),
+      _infoCard([
+        _field(
+          "Biomechanical Findings",
+          session.biomechanicalFindings,
+        ),
+        _field(
+          "Osteopathic Findings",
+          session.osteopathicFindings,
+        ),
+        _field(
+          "Other Findings",
+          session.otherFindings,
+        ),
+      ]),
+
+      _sectionTitle("Treatment"),
+      _infoCard([
+        _field(
+          "Treatment Goals",
+          session.treatmentGoals,
+        ),
+        _field(
+          "Treatment Given",
+          session.treatmentGiven,
+        ),
+        _field(
+          "Home Exercise Program",
+          session.homeExerciseProgram,
+        ),
+        _field("Advice", session.advice),
+      ]),
+
+      _sectionTitle("Session Note"),
+      _infoCard([
+        _field(
+          "Clinical Note",
+          session.sessionNote.trim().isEmpty
+              ? "No session note added"
+              : session.sessionNote,
+        ),
+      ]),
+
+      _sectionTitle("Payment"),
+      _infoCard([
+        _field(
+          "Amount Paid",
+          session.paymentAmount.isEmpty
+              ? "Not entered"
+              : session.paymentAmount,
+        ),
+      ]),
+
+      pw.SizedBox(height: 20),
+
+      pw.Container(
+        width: double.infinity,
+        padding: const pw.EdgeInsets.only(top: 24),
+        child: pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.end,
+          children: [
+            pw.Column(
+              children: [
+                pw.Container(
+                  width: 150,
+                  height: 1,
+                  color: PdfColors.grey500,
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  "Doctor Signature",
+                  style: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.grey700,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
 
   Future<void> generateSessionPdf(
-
       SessionModel session,
       ) async {
-
     final pdf = pw.Document();
-
-
-    final logoBytes =
-    (await rootBundle.load("lib/assets/images/logo.jpeg"))
-        .buffer
-        .asUint8List();
-
-    final logo = pw.MemoryImage(logoBytes);
-
-
-
+    final logo = await _loadLogo();
 
     pdf.addPage(
       pw.MultiPage(
-        pageFormat: PdfPageFormat.a4,
-        margin: const pw.EdgeInsets.all(25),
+        pageTheme: _pageTheme(),
+        header: (context) => _pageHeader(
+          context,
+          logo,
+          "Physiotherapy Session Report",
+        ),
+        footer: (context) => _pageFooter(),
+        build: (context) => [
+          _reportTitle(
+            "Session ${session.sessionNumber}",
+            "${session.patientName} • ${session.patientCode}",
+          ),
+          pw.SizedBox(height: 8),
+          ..._sessionContent(
+            session,
+            showPatientInformation: true,
+          ),
+        ],
+      ),
+    );
 
-        build: (context) {
-          return [
+    final bytes = await pdf.save();
 
-            //--------------------------------------------------
-// Clinic Header
-//--------------------------------------------------
+    await _savePdf(
+      bytes,
+      "${session.patientCode}_Session_${session.sessionNumber}.pdf",
+    );
+  }
 
+  Future<void> generateAllSessionsPdf(
+      List<SessionModel> sessions,
+      ) async {
+    if (sessions.isEmpty) {
+      return;
+    }
 
-            pw.SizedBox(height: 18),
+    final sortedSessions =
+    List<SessionModel>.from(sessions)
+      ..sort(
+            (a, b) => a.sessionNumber.compareTo(
+          b.sessionNumber,
+        ),
+      );
 
-            pw.Container(
-              width: double.infinity,
-              padding: const pw.EdgeInsets.symmetric(
-                vertical: 8,
-              ),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.blue900,
-                borderRadius: pw.BorderRadius.circular(5),
-              ),
-              alignment: pw.Alignment.center,
-              child: pw.Text(
-                "PHYSIOTHERAPY SESSION REPORT",
-                style: pw.TextStyle(
-                  color: PdfColors.white,
-                  fontSize: 15,
-                  fontWeight: pw.FontWeight.bold,
-                  letterSpacing: 1,
-                ),
-              ),
+    final firstSession = sortedSessions.first;
+    final logo = await _loadLogo();
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageTheme: _pageTheme(),
+        header: (context) => _pageHeader(
+          context,
+          logo,
+          "Complete Patient Clinical History",
+        ),
+        footer: (context) => _pageFooter(),
+        build: (context) => [
+          _reportTitle(
+            firstSession.patientName,
+            "${firstSession.patientCode} • ${sortedSessions.length} sessions",
+          ),
+          _sectionTitle("Patient Information"),
+          _patientSummary(firstSession),
+          pw.SizedBox(height: 12),
+          _sectionTitle("Record Summary"),
+          _infoCard([
+            _field(
+              "Total Sessions",
+              sortedSessions.length.toString(),
             ),
-
-            pw.SizedBox(height: 5),
-
-            pw.SizedBox(height: 5),
-
-            //--------------------------------------------------
-            // Patient Information
-            //--------------------------------------------------
-
-
-
-            buildInfoRow(
-              "Patient Code",
-              session.patientCode,
+            _field(
+              "First Session",
+              sortedSessions.first.sessionDate,
             ),
-
-            buildInfoRow(
-              "Patient Name",
-              session.patientName,
+            _field(
+              "Latest Session",
+              sortedSessions.last.sessionDate,
             ),
+          ]),
+        ],
+      ),
+    );
 
-            buildInfoRow(
-              "Phone",
-              session.phone,
-            ),
-
-            buildInfoRow(
-              "Age",
-              session.age.toString(),
-            ),
-
-            buildInfoRow(
-              "Gender",
-              session.gender,
-            ),
-
-            buildInfoRow(
-              "Address",
-              session.address,
-            ),
-
-            pw.SizedBox(height: 20),
-
-            //--------------------------------------------------
-            // Session Information
-            //--------------------------------------------------
-
-            buildSectionTitle("Session Information"),
-
-            buildInfoRow(
-              "Session Number",
-              session.sessionNumber.toString(),
-            ),
-
-            buildInfoRow(
-              "Session Date",
+    for (final session in sortedSessions) {
+      pdf.addPage(
+        pw.MultiPage(
+          pageTheme: _pageTheme(),
+          header: (context) => _pageHeader(
+            context,
+            logo,
+            "Complete Patient Clinical History",
+          ),
+          footer: (context) => _pageFooter(),
+          build: (context) => [
+            _reportTitle(
+              "Session ${session.sessionNumber}",
               session.sessionDate,
             ),
-
-            pw.SizedBox(height: 20),
-            //--------------------------------------------------
-            // History
-            //--------------------------------------------------
-
-            buildSectionTitle("History"),
-
-            buildInfoRow(
-              "Chief Complaint",
-              session.chiefComplaint,
+            pw.SizedBox(height: 8),
+            ..._sessionContent(
+              session,
+              showPatientInformation: false,
             ),
-
-            buildInfoRow(
-              "Duration",
-              session.duration,
-            ),
-
-            pw.SizedBox(height: 20),
-
-            //--------------------------------------------------
-            // OPQRST
-            //--------------------------------------------------
-
-            buildSectionTitle("OPQRST"),
-
-            buildInfoRow(
-              "Onset",
-              session.onset,
-            ),
-
-            buildInfoRow(
-              "Provocation",
-              session.provocation,
-            ),
-
-            buildInfoRow(
-              "Quality",
-              session.quality,
-            ),
-
-            buildInfoRow(
-              "Region",
-              session.region,
-            ),
-
-            buildInfoRow(
-              "Severity",
-              session.severity,
-            ),
-
-            buildInfoRow(
-              "Timing",
-              session.timing,
-            ),
-
-            pw.SizedBox(height: 20),
-
-            //--------------------------------------------------
-            // SINSS
-            //--------------------------------------------------
-
-            buildSectionTitle("SINSS"),
-
-            buildInfoRow(
-              "Severity",
-              session.sinssSeverity,
-            ),
-
-            buildInfoRow(
-              "Irritability",
-              session.irritability,
-            ),
-
-            buildInfoRow(
-              "Nature",
-              session.nature,
-            ),
-
-            buildInfoRow(
-              "Stage",
-              session.stage,
-            ),
-
-            buildInfoRow(
-              "Stability",
-              session.stability,
-            ),
-
-            pw.SizedBox(height: 20),
-
-
-            //--------------------------------------------------
-            // Origin
-            //--------------------------------------------------
-
-            buildSectionTitle("Origin"),
-
-            pw.Wrap(
-
-              spacing: 8,
-
-              runSpacing: 8,
-
-              children: session.origins.map(
-
-                    (origin) {
-
-                  return pw.Container(
-
-                    padding: const pw.EdgeInsets.symmetric(
-
-                      horizontal: 10,
-
-                      vertical: 5,
-
-                    ),
-
-                    decoration: pw.BoxDecoration(
-
-                      border: pw.Border.all(
-
-                        color: PdfColors.blueGrey,
-
-                      ),
-
-                      borderRadius:
-                      pw.BorderRadius.circular(12),
-
-                    ),
-
-                    child: pw.Text(origin),
-
-                  );
-
-                },
-
-              ).toList(),
-
-            ),
-
-            pw.SizedBox(height: 20),
-
-
-            //--------------------------------------------------
-            // Assessment
-            //--------------------------------------------------
-
-            buildSectionTitle("Assessment"),
-
-            buildInfoRow(
-
-              "Biomechanical",
-
-              session.biomechanicalFindings,
-
-            ),
-
-            buildInfoRow(
-
-              "Osteopathic",
-
-              session.osteopathicFindings,
-
-            ),
-
-            buildInfoRow(
-
-              "Other Findings",
-
-              session.otherFindings,
-
-            ),
-
-            pw.SizedBox(height: 20),
-            //--------------------------------------------------
-            // Treatment
-            //--------------------------------------------------
-
-            buildSectionTitle("Treatment"),
-
-            buildInfoRow(
-              "Goals",
-              session.treatmentGoals,
-            ),
-
-            buildInfoRow(
-              "Treatment Given",
-              session.treatmentGiven,
-            ),
-
-            buildInfoRow(
-              "Home Exercise",
-              session.homeExerciseProgram,
-            ),
-
-            buildInfoRow(
-              "Advice",
-              session.advice,
-            ),
-
-            pw.SizedBox(height: 25),
-
-            pw.SizedBox(height: 10),
-
-            buildSectionTitle("Session Note"),
-
-            pw.Container(
-              width: double.infinity,
-
-              padding: const pw.EdgeInsets.all(15),
-
-              decoration: pw.BoxDecoration(
-                color: PdfColors.white,
-
-                border: pw.Border.all(
-                  color: PdfColors.blue100,
-                  width: 0.8,
-                ),
-
-                borderRadius: pw.BorderRadius.circular(6),
-              ),
-
-              child: pw.Text(
-                session.sessionNote.trim().isEmpty
-                    ? "No Session Note Added"
-                    : session.sessionNote,
-
-                style: const pw.TextStyle(
-                  fontSize: 11,
-                  lineSpacing: 4,
-                  color: PdfColors.grey800,
-                ),
-              ),
-            ),
-
-            //--------------------------------------------------
-// Payment Details
-//--------------------------------------------------
-
-            buildSectionTitle("Payment Details"),
-
-            pw.Container(
-              width: double.infinity,
-              padding: const pw.EdgeInsets.all(15),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.white,
-                border: pw.Border.all(
-                  color: PdfColors.blue100,
-                ),
-                borderRadius: pw.BorderRadius.circular(8),
-              ),
-              child: pw.Column(
-                children: [
-
-                  //------------------------------------------------
-                  // Amount
-                  //------------------------------------------------
-
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-
-                      pw.Text(
-                        "Amount Paid",
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                          fontSize: 12,
-                        ),
-                      ),
-
-                      pw.Text(
-                        session.paymentAmount.isEmpty
-                            ? "Not Entered"
-                            : ":${session.paymentAmount}",
-                        style: pw.TextStyle(
-                          fontSize: 13,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
-                      ),
-
-                    ],
-                  ),
-
-                  pw.Divider(color: PdfColors.blue100),
-
-                  //------------------------------------------------
-                  // Status
-                  //------------------------------------------------
-
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    children: [
-
-                      pw.Text(
-                        "Payment Status",
-                        style: pw.TextStyle(
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                          fontSize: 12,
-                        ),
-                      ),
-
-                      pw.Container(
-                        padding: const pw.EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: pw.BoxDecoration(
-                          color: session.paymentStatus.toLowerCase() == "paid"
-                              ? PdfColors.green100
-                              : PdfColors.orange100,
-                          borderRadius: pw.BorderRadius.circular(15),
-                        ),
-                        child: pw.Text(
-                          session.paymentStatus,
-                          style: pw.TextStyle(
-                            fontWeight: pw.FontWeight.bold,
-                            color: session.paymentStatus.toLowerCase() == "paid"
-                                ? PdfColors.green800
-                                : PdfColors.orange800,
-                          ),
-                        ),
-                      ),
-
-                    ],
-                  ),
-
-                ],
-              ),
-            ),
-
-            //--------------------------------------------------
-            // Doctor Signature
-            //--------------------------------------------------
-
-            pw.SizedBox(height: 50),
-            //--------------------------------------------------
-// Report Completion Section
-//--------------------------------------------------
-
-            pw.Container(
-              margin: const pw.EdgeInsets.only(top: 20),
-              padding: const pw.EdgeInsets.all(15),
-              decoration: pw.BoxDecoration(
-                color: PdfColors.white,
-
-                borderRadius: pw.BorderRadius.circular(8),
-              ),
-              child: pw.Row(
-                crossAxisAlignment: pw.CrossAxisAlignment.end,
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                children: [
-
-                  //------------------------------------------------
-                  // Generated On
-                  //------------------------------------------------
-
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-
-                      pw.Text(
-                        "REPORT GENERATED",
-                        style: pw.TextStyle(
-                          fontSize: 11,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-
-                      pw.SizedBox(height: 6),
-
-                      pw.Text(
-                        DateTime.now().toString(),
-                        style: const pw.TextStyle(
-                          fontSize: 10,
-                        ),
-                      ),
-
-                    ],
-                  ),
-
-                  //------------------------------------------------
-                  // Doctor Signature
-                  //------------------------------------------------
-
-                  pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.center,
-                    children: [
-
-                      pw.Container(
-                        width: 170,
-                        height: 1,
-                        color: PdfColors.grey500,
-                      ),
-
-                      pw.SizedBox(height: 6),
-
-                      pw.Text(
-                        "Doctor Signature",
-                        style: pw.TextStyle(
-                          fontSize: 11,
-                          fontWeight: pw.FontWeight.bold,
-                          color: PdfColors.blue900,
-                        ),
-                      ),
-
-                    ],
-                  ),
-
-                ],
-              ),
-            ),
-
-            pw.SizedBox(height: 25),
-
-//--------------------------------------------------
-// Footer
-//--------------------------------------------------
-
-            pw.Center(
-              child: pw.Text(
-                "This report is computer generated and intended for clinical reference.",
-                style: const pw.TextStyle(
-                  fontSize: 9,
-                  color: PdfColors.grey600,
-                ),
-              ),
-            ),
-
-            pw.SizedBox(height: 30),
-
-            //--------------------------------------------------
-            // Footer
-            //--------------------------------------------------
-
-            pw.Center(
-
-              child: pw.Text(
-
-                "***** End of Medical Report *****",
-
-                style: const pw.TextStyle(
-
-                  fontSize: 10,
-
-                  color: PdfColors.grey,
-
-                ),
-
-              ),
-
-            ),
-
-          ];
-        },
-      ),
-    );    // ==========================================================
-    // GENERATE PDF BYTES
-    // ==========================================================
-
-    final pdfBytes = await pdf.save();
-
-    final fileName =
-        "${session.patientCode}_Session_${session.sessionNumber}.pdf";
-
-    debugPrint("PDF GENERATED SUCCESSFULLY");
-
-    // ==========================================================
-    // WINDOWS - SHOW SAVE AS DIALOG
-    // ==========================================================
-
-    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.windows) {
-      debugPrint("WINDOWS SAVE DIALOG OPENING");
-
-      final FileSaveLocation? location = await getSaveLocation(
+          ],
+        ),
+      );
+    }
+
+    final bytes = await pdf.save();
+
+    await _savePdf(
+      bytes,
+      "${firstSession.patientCode}_Complete_Clinical_History.pdf",
+    );
+  }
+
+  Future<void> _savePdf(
+      Uint8List bytes,
+      String fileName,
+      ) async {
+    if (!kIsWeb &&
+        defaultTargetPlatform ==
+            TargetPlatform.windows) {
+      final location = await getSaveLocation(
         suggestedName: fileName,
         acceptedTypeGroups: const [
           XTypeGroup(
@@ -722,33 +616,22 @@ class PdfService {
       );
 
       if (location == null) {
-        debugPrint("PDF SAVE CANCELLED");
         return;
       }
 
-      final XFile pdfFile = XFile.fromData(
-        pdfBytes,
+      final file = XFile.fromData(
+        bytes,
         mimeType: "application/pdf",
         name: fileName,
       );
 
-      await pdfFile.saveTo(location.path);
-
-      debugPrint("PDF SAVED SUCCESSFULLY");
-      debugPrint("PDF PATH: ${location.path}");
-
+      await file.saveTo(location.path);
       return;
     }
 
-    // ==========================================================
-    // ANDROID / WEB / OTHER PLATFORMS
-    // ==========================================================
-
     await Printing.layoutPdf(
       name: fileName,
-      onLayout: (PdfPageFormat format) async {
-        return pdfBytes;
-      },
+      onLayout: (format) async => bytes,
     );
   }
 }

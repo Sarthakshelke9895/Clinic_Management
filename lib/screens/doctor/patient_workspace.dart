@@ -9,6 +9,8 @@ import '../../services/pdf/pdf_service.dart';
 import '../../utils/app_colors.dart';
 import 'package:intl/intl.dart';
 
+import '../../services/auth/auth_service.dart';
+
 import '../doctor/session_details_screen.dart';
 
 class PatientWorkspace extends StatefulWidget {
@@ -376,20 +378,43 @@ const SizedBox(height: 20),
 //==========================================
 // Session History
 //==========================================
+  Row(
+    children: [
+      const Expanded(
+        child: Text(
+          "Previous Sessions",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
 
-const Text(
-
-"Previous Sessions",
-
-style: TextStyle(
-
-fontSize: 20,
-
-fontWeight: FontWeight.bold,
-
-),
-
-),
+      if (sessions.isNotEmpty)
+        FilledButton.icon(
+          onPressed: () async {
+            await PdfService.instance.generateAllSessionsPdf(
+              sessions,
+            );
+          },
+          icon: const Icon(
+            Icons.picture_as_pdf_outlined,
+            size: 18,
+          ),
+          label: const Text(
+            "Get All PDFs",
+          ),
+          style: FilledButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 18,
+              vertical: 14,
+            ),
+          ),
+        ),
+    ],
+  ),
 
 const SizedBox(height: 15),
 
@@ -587,7 +612,6 @@ child: Text(value),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-
                 Text(
                   "Session ${session.sessionNumber}",
                   style: const TextStyle(
@@ -596,11 +620,11 @@ child: Text(value),
                   ),
                 ),
 
-                const SizedBox(height: 4),
+                const SizedBox(height: 6),
 
                 Row(
                   children: [
-
+                    // Date
                     const Icon(
                       Icons.calendar_today_outlined,
                       size: 14,
@@ -618,9 +642,228 @@ child: Text(value),
                       ),
                     ),
 
+                    const SizedBox(width: 20),
+
+                    // Payment Amount
+                    Container(
+                      height: 32,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(6),
+                        border: Border.all(
+                          color: Colors.blue.shade200,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.currency_rupee,
+                            size: 14,
+                            color: Colors.blue.shade800,
+                          ),
+
+                          const SizedBox(width: 2),
+
+                          Text(
+                            session.paymentAmount.isEmpty
+                                ? "0"
+                                : session.paymentAmount,
+                            style: TextStyle(
+                              color: Colors.blue.shade800,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(width: 8),
+
+                    // Read Only Payment Status
+                    //============================================================
+// Payment Status
+// Reception -> Editable
+// Doctor -> Read Only
+//============================================================
+
+                    Builder(
+                      builder: (context) {
+                        final bool paymentCompleted =
+                            session.paymentStatus == "Completed";
+
+                        //========================================================
+                        // RECEPTION - EDITABLE PAYMENT STATUS
+                        //========================================================
+
+                        if (AuthService.isReception) {
+                          return Container(
+                            width: 180,
+                            height: 32,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: paymentCompleted
+                                  ? Colors.green.shade50
+                                  : Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(
+                                color: paymentCompleted
+                                    ? Colors.green.shade300
+                                    : Colors.orange.shade300,
+                              ),
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: paymentCompleted
+                                    ? "Completed"
+                                    : "Pending",
+                                isExpanded: true,
+                                icon: Icon(
+                                  Icons.keyboard_arrow_down,
+                                  size: 18,
+                                  color: paymentCompleted
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                ),
+                                style: TextStyle(
+                                  color: paymentCompleted
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                                items: const [
+                                  DropdownMenuItem<String>(
+                                    value: "Pending",
+                                    child: Text(
+                                      "Payment Pending",
+                                    ),
+                                  ),
+                                  DropdownMenuItem<String>(
+                                    value: "Completed",
+                                    child: Text(
+                                      "Payment Completed",
+                                    ),
+                                  ),
+                                ],
+                                onChanged: (String? value) async {
+                                  if (value == null ||
+                                      session.id == null ||
+                                      session.id!.isEmpty) {
+                                    return;
+                                  }
+
+                                  try {
+                                    await sessionRepository
+                                        .updatePaymentStatus(
+                                      session.id!,
+                                      value,
+                                    );
+
+                                    if (!mounted) return;
+
+                                    await loadData();
+
+                                    if (!mounted) return;
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      SnackBar(
+                                        content: Text(
+                                          value == "Completed"
+                                              ? "Payment marked as completed"
+                                              : "Payment marked as pending",
+                                        ),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    debugPrint(
+                                      "SESSION PAYMENT UPDATE ERROR: $e",
+                                    );
+
+                                    if (!mounted) return;
+
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Failed to update payment status",
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          );
+                        }
+
+                        //========================================================
+                        // DOCTOR - READ ONLY PAYMENT STATUS
+                        //========================================================
+
+                        return Container(
+                          height: 32,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: paymentCompleted
+                                ? Colors.green.shade50
+                                : Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(
+                              color: paymentCompleted
+                                  ? Colors.green.shade300
+                                  : Colors.orange.shade300,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                paymentCompleted
+                                    ? Icons.check_circle_outline
+                                    : Icons.schedule,
+                                size: 14,
+                                color: paymentCompleted
+                                    ? Colors.green.shade700
+                                    : Colors.orange.shade700,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                paymentCompleted
+                                    ? "Payment Completed"
+                                    : "Payment Pending",
+                                style: TextStyle(
+                                  color: paymentCompleted
+                                      ? Colors.green.shade700
+                                      : Colors.orange.shade700,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(width: 5),
+                              Icon(
+                                Icons.lock_outline,
+                                size: 13,
+                                color: paymentCompleted
+                                    ? Colors.green.shade700
+                                    : Colors.orange.shade700,
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
                   ],
                 ),
-
               ],
             ),
           ),

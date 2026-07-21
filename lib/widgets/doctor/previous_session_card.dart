@@ -191,56 +191,7 @@ class PreviousSessionCard extends StatelessWidget {
                         // Payment Status
                         //------------------------------------------------
 
-                        Container(
-                          padding:
-                          const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 5,
-                          ),
 
-                          decoration: BoxDecoration(
-                            color: completed
-                                ? Colors.green.shade100
-                                : Colors.orange.shade100,
-
-                            borderRadius:
-                            BorderRadius.circular(20),
-                          ),
-
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-
-                            children: [
-
-                              Icon(
-                                completed
-                                    ? Icons.check_circle
-                                    : Icons.pending,
-
-                                size: 15,
-
-                                color: completed
-                                    ? Colors.green
-                                    : Colors.orange,
-                              ),
-
-                              const SizedBox(width: 5),
-
-                              Text(
-                                session.paymentStatus,
-
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-
-                                  color: completed
-                                      ? Colors.green
-                                      : Colors.orange,
-                                ),
-                              ),
-
-                            ],
-                          ),
-                        ),
 
                       ],
                     ),

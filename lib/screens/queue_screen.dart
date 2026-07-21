@@ -3,6 +3,10 @@ import 'package:intl/intl.dart';
 import '../../models/queue_model.dart';
 import '../../repositories/queue_repository.dart';
 
+
+import '../services/auth/auth_service.dart';
+import '../screens/doctor/doctor_workspace.dart';
+
 class QueueScreen extends StatefulWidget {
   final bool embedded;
 
@@ -36,6 +40,8 @@ class _QueueScreenState extends State<QueueScreen> {
     queueFuture =
         repository.getWaitingQueue(selectedDate);
   }
+
+
   Future<void> pickDate() async {
 
     final picked = await showDatePicker(
@@ -61,16 +67,27 @@ class _QueueScreenState extends State<QueueScreen> {
     refreshQueue();
 
   }
-
   Future<void> refreshQueue() async {
-
     setState(() {
-
       queueFuture =
-          repository.getQueue(selectedDate);
-
+          repository.getWaitingQueue(selectedDate);
     });
+  }
 
+
+  void openPatientWorkspace(QueueModel patient) {
+    if (!AuthService.isDoctor) {
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DoctorWorkspace(
+          initialQueue: patient,
+        ),
+      ),
+    );
   }
   @override
   Widget build(BuildContext context) {
@@ -96,16 +113,20 @@ class _QueueScreenState extends State<QueueScreen> {
             ),
             child: Row(
               children: [
+                //--------------------------------------------------
+                // Date Filter
+                //--------------------------------------------------
 
-                Expanded(
+                SizedBox(
+                  width: 700,
+                  height: 45,
                   child: Container(
-                    height: 50,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(6),
                       border: Border.all(
                         color: Colors.grey.shade300,
                       ),
@@ -114,7 +135,6 @@ class _QueueScreenState extends State<QueueScreen> {
                       onTap: pickDate,
                       child: Row(
                         children: [
-
                           const Icon(
                             Icons.calendar_today,
                             size: 20,
@@ -134,33 +154,38 @@ class _QueueScreenState extends State<QueueScreen> {
                           const Icon(
                             Icons.keyboard_arrow_down,
                           ),
-
                         ],
                       ),
                     ),
                   ),
                 ),
 
-                const SizedBox(width: 12),
+                // Push Queue and Refresh to the right
+                const Spacer(),
+
+                //--------------------------------------------------
+                // Queue Button
+                //--------------------------------------------------
 
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 14,
-                  ),
+                  width: 200,
+                  height: 50,
+                  alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: Colors.blue.shade50,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Row(
-                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
                         Icons.groups,
                         size: 18,
                         color: Colors.blue,
                       ),
+
                       SizedBox(width: 6),
+
                       Text(
                         "Queue",
                         style: TextStyle(
@@ -172,6 +197,36 @@ class _QueueScreenState extends State<QueueScreen> {
                   ),
                 ),
 
+                const SizedBox(width: 10),
+
+                //--------------------------------------------------
+                // Refresh Button
+                //--------------------------------------------------
+
+                SizedBox(
+                  width: 50,
+                  height: 45,
+                  child: IconButton(
+                    tooltip: "Refresh Queue",
+                    onPressed: () {
+                      refreshQueue();
+                    },
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      size: 24,
+                    ),
+                    style: IconButton.styleFrom(
+                      foregroundColor: Theme.of(context).primaryColor,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.grey.shade300,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -258,256 +313,310 @@ class _QueueScreenState extends State<QueueScreen> {
 
                 final patient = queue[index];
 
-                return Container(
-                  margin: const EdgeInsets.only(
-                    left: 16,
-                    right: 16,
-                    bottom: 1,
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Colors.grey.shade200,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(.03),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-
-                      //--------------------------------------------------
-                      // Queue Number
-                      //--------------------------------------------------
-
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: Colors.blue.shade50,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            "${index + 1}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
+                return Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    // Only doctors can click the patient row.
+                    // Receptionist gets null, so the row is not clickable.
+                    onTap: AuthService.isDoctor
+                        ? () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => DoctorWorkspace(
+                            initialQueue: patient,
                           ),
                         ),
+                      );
+                    }
+                        : null,
+                    borderRadius: BorderRadius.circular(10),
+                    child: Container(
+                      margin: const EdgeInsets.only(
+                        left: 16,
+                        right: 16,
+                        bottom: 1,
                       ),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Colors.grey.shade200,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: .03),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          //--------------------------------------------------
+                          // Queue Number
+                          //--------------------------------------------------
 
-                      const SizedBox(width: 10),
+                          Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade50,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(
+                              child: Text(
+                                "${index + 1}",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ),
 
-                      //--------------------------------------------------
-                      // Patient Details
-                      //--------------------------------------------------
+                          const SizedBox(width: 10),
 
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
+                          //--------------------------------------------------
+                          // Patient Details
+                          //--------------------------------------------------
 
-                        //--------------------------------------------------
-                        // Name + Time
-                        //--------------------------------------------------
-
-                            Row(
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-
-                                //------------------------------------------------------
-                                // Patient Name
-                                //------------------------------------------------------
-
-                                Expanded(
-                                  child: Text(
-                                    patient.patientName,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-
-                                //------------------------------------------------------
-                                // Waiting Chip
-                                //------------------------------------------------------
-
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.orange.shade50,
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(
-                                      color: Colors.orange.shade200,
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-
-                                      Icon(
-                                        Icons.circle,
-                                        size: 8,
-                                        color: Colors.orange.shade700,
-                                      ),
-
-                                      const SizedBox(width: 4),
-
-                                      Text(
-                                        "Waiting",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.orange.shade700,
-                                        ),
-                                      ),
-
-                                    ],
-                                  ),
-                                ),
-
-                                const SizedBox(width: 10),
-
-                                //------------------------------------------------------
-                                // Arrival Time
-                                //------------------------------------------------------
+                                //--------------------------------------------------
+                                // Name + Time
+                                //--------------------------------------------------
 
                                 Row(
                                   children: [
+                                    //--------------------------------------------------
+                                    // Patient Name
+                                    //--------------------------------------------------
 
-                                    Icon(
-                                      Icons.access_time_rounded,
-                                      size: 15,
-                                      color: Colors.grey.shade600,
-                                    ),
-
-                                    const SizedBox(width: 8),
-
-                                    Text(
-                                      patient.arrivalTime,
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                    Expanded(
+                                      child: Text(
+                                        patient.patientName,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
                                       ),
                                     ),
 
+                                    //--------------------------------------------------
+                                    // Waiting Chip
+                                    //--------------------------------------------------
+
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.orange.shade50,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(
+                                          color: Colors.orange.shade200,
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(
+                                            Icons.circle,
+                                            size: 8,
+                                            color: Colors.orange.shade700,
+                                          ),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            "Waiting",
+                                            style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.orange.shade700,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 10),
+
+                                    //--------------------------------------------------
+                                    // Arrival Time
+                                    //--------------------------------------------------
+
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.access_time_rounded,
+                                          size: 15,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          patient.arrivalTime,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade700,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ],
                                 ),
 
-                              ],
-                            ),
-
-                  const SizedBox(height: 1),
-
-                  //--------------------------------------------------
-                  // Code + Phone
-                  //--------------------------------------------------
-
-                            const SizedBox(height: 0),
-
-                            Row(
-                              children: [
+                                const SizedBox(height: 1),
 
                                 //--------------------------------------------------
-                                // Patient Details
+                                // Code + Phone + Doctor
                                 //--------------------------------------------------
 
-                                Expanded(
-                                  child: Text(
-                                    "${patient.patientCode} • 📞 ${patient.phone}",
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      color: Colors.grey.shade700,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          //--------------------------------------------------
+                                          // Patient Code
+                                          //--------------------------------------------------
 
-                                //--------------------------------------------------
-                                // Remove Button
-                                //--------------------------------------------------
-
-                                Tooltip(
-                                  message: "Remove from Queue",
-                                  child: Material(
-                                    color: Colors.transparent,
-                                    borderRadius: BorderRadius.circular(8),
-                                    child: InkWell(
-                                      borderRadius: BorderRadius.circular(8),
-
-                                      hoverColor: Colors.red.withOpacity(.08),
-
-                                      splashColor: Colors.red.withOpacity(.15),
-
-                                      onTap: () async {
-
-                                        await repository.removePatient(
-                                          patient.id!,
-                                        );
-
-                                        refreshQueue();
-
-                                      },
-
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 10,
-                                          vertical: 6,
-                                        ),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-
-                                            Icon(
-                                              Icons.close_rounded,
-                                              size: 18,
-                                              color: Colors.red.shade600,
+                                          Text(
+                                            patient.patientCode,
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
                                             ),
+                                          ),
 
-                                            const SizedBox(width: 4),
+                                          const SizedBox(width: 14),
 
-                                            Text(
-                                              "Remove",
+                                          //--------------------------------------------------
+                                          // Phone
+                                          //--------------------------------------------------
+
+                                          Icon(
+                                            Icons.phone_outlined,
+                                            size: 14,
+                                            color: Colors.grey.shade600,
+                                          ),
+
+                                          const SizedBox(width: 5),
+
+                                          Text(
+                                            patient.phone,
+                                            style: TextStyle(
+                                              color: Colors.grey.shade700,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+
+                                          const SizedBox(width: 18),
+
+                                          //--------------------------------------------------
+                                          // Assigned Doctor
+                                          //--------------------------------------------------
+
+                                          Icon(
+                                            Icons.medical_services_outlined,
+                                            size: 15,
+                                            color: Colors.blue.shade700,
+                                          ),
+
+                                          const SizedBox(width: 5),
+
+                                          Flexible(
+                                            child: Text(
+                                              patient.doctorName.isEmpty
+                                                  ? "Doctor not assigned"
+                                                  : patient.doctorName,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                               style: TextStyle(
-                                                color: Colors.red.shade600,
-                                                fontWeight: FontWeight.w600,
+                                                color: patient.doctorName.isEmpty
+                                                    ? Colors.grey.shade500
+                                                    : Colors.blue.shade700,
                                                 fontSize: 12,
+                                                fontWeight: FontWeight.w600,
                                               ),
                                             ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
 
-                                          ],
+                                    //--------------------------------------------------
+                                    // Remove Button
+                                    //--------------------------------------------------
+
+                                    Tooltip(
+                                      message: "Remove from Queue",
+                                      child: Material(
+                                        color: Colors.transparent,
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(8),
+                                          hoverColor:
+                                          Colors.red.withValues(alpha: .08),
+                                          splashColor:
+                                          Colors.red.withValues(alpha: .15),
+
+                                          // This continues to work for both
+                                          // receptionist and doctor.
+                                          onTap: () async {
+                                            await repository.removePatient(
+                                              patient.id!,
+                                            );
+
+                                            await refreshQueue();
+                                          },
+
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            child: Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.close_rounded,
+                                                  size: 18,
+                                                  color: Colors.red.shade600,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  "Remove",
+                                                  style: TextStyle(
+                                                    color: Colors.red.shade600,
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
+                                  ],
                                 ),
-
                               ],
                             ),
-
-
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
-
-                    ],
+                    ),
                   ),
                 );
 

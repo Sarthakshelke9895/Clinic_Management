@@ -21,6 +21,107 @@ class PatientSearchScreen extends StatefulWidget {
 
 class _PatientSearchScreenState
     extends State<PatientSearchScreen> {
+
+  Future<String?> showDoctorAssignDialog() async {
+    String? selectedDoctor;
+
+    final doctors = [
+      "Dr. Rahul Patil",
+      "Dr. Sneha Sharma",
+      "Dr. Amit Kulkarni",
+      "Dr. Priya Deshmukh",
+      "Dr. Rohan Joshi",
+    ];
+
+    return showDialog<String>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+
+              title: const Row(
+                children: [
+                  Icon(
+                    Icons.medical_services_outlined,
+                    size: 22,
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    "Assign Doctor",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+
+              content: SizedBox(
+                width: 400,
+                child: DropdownButtonFormField<String>(
+                  value: selectedDoctor,
+                  isExpanded: true,
+                  decoration: InputDecoration(
+                    labelText: "Select Doctor",
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  items: doctors.map((doctor) {
+                    return DropdownMenuItem<String>(
+                      value: doctor,
+                      child: Text(doctor),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setDialogState(() {
+                      selectedDoctor = value;
+                    });
+                  },
+                ),
+              ),
+
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                  },
+                  child: const Text("Cancel"),
+                ),
+
+                ElevatedButton(
+                  onPressed: selectedDoctor == null
+                      ? null
+                      : () {
+                    Navigator.pop(
+                      dialogContext,
+                      selectedDoctor,
+                    );
+                  },
+                  child: const Text(
+                    "Assign & Add",
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+
+
   final PatientSearchController controller =
   PatientSearchController();
 
@@ -83,58 +184,42 @@ class _PatientSearchScreenState
 
             Row(
               children: [
-
                 //--------------------------------------------------
                 // Search Bar
                 //--------------------------------------------------
-
-                Expanded(
-                  flex: 4,
-                  child: SizedBox(
-                    height: 50,
-                    child: TextField(
-                      controller: controller.searchController,
-                      onChanged: searchPatient,
-                      decoration: InputDecoration(
-                        hintText: "Search by Name or Mobile Number",
-                        prefixIcon: const Icon(Icons.search),
-                        filled: true,
-                        fillColor: Colors.white,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 0,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Colors.grey.shade300,
-                          ),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).primaryColor,
-                            width: 1.5,
-                          ),
+                SizedBox(
+                  width: 700,
+                  height: 45,
+                  child: TextField(
+                    controller: controller.searchController,
+                    onChanged: searchPatient,
+                    decoration: InputDecoration(
+                      hintText: "Search by Name or Mobile Number",
+                      prefixIcon: const Icon(Icons.search),
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 0,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(
+                          color: Colors.grey.shade300,
                         ),
                       ),
                     ),
                   ),
                 ),
+                const Spacer(),
 
                 const SizedBox(width: 12),
 
                 //--------------------------------------------------
                 // Register Button
                 //--------------------------------------------------
-
                 SizedBox(
-                  height: 40,
+                  height: 42,
+                  width: 200,
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       elevation: 0,
@@ -148,7 +233,6 @@ class _PatientSearchScreenState
                       ),
                     ),
                     onPressed: () async {
-
                       final refresh = await showDialog<bool>(
                         context: context,
                         barrierDismissible: false,
@@ -162,13 +246,46 @@ class _PatientSearchScreenState
                       if (refresh == true) {
                         loadPatients();
                       }
-
                     },
-                    icon: const Icon(Icons.person_add_alt_1, size: 20),
+                    icon: const Icon(
+                      Icons.person_add_alt_1,
+                      size: 20,
+                    ),
                     label: const Text(
                       "Register",
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(width: 8),
+
+                //--------------------------------------------------
+                // Refresh Button
+                //--------------------------------------------------
+                SizedBox(
+                  height: 42,
+                  width: 42,
+                  child: IconButton(
+                    tooltip: "Refresh Patients",
+                    onPressed: () {
+                      controller.searchController.clear();
+                      loadPatients();
+                    },
+                    icon: const Icon(
+                      Icons.refresh_rounded,
+                      size: 22,
+                    ),
+                    style: IconButton.styleFrom(
+                      foregroundColor: Theme.of(context).primaryColor,
+                      backgroundColor: Colors.white,
+                      side: BorderSide(
+                        color: Colors.grey.shade300,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6),
                       ),
                     ),
                   ),
@@ -528,23 +645,63 @@ class _PatientSearchScreenState
                                           onPressed: waiting
                                               ? null
                                               : () async {
-                                            try {
-                                              await QueueRepository()
-                                                  .addPatientToQueue(
-                                                  patient);
+                                            //------------------------------------------------
+                                            // Open Doctor Assignment Dialog
+                                            //------------------------------------------------
 
-                                              loadPatients();
-                                            } catch (e) {
-                                              ScaffoldMessenger.of(
-                                                  context)
-                                                  .showSnackBar(
+                                            final selectedDoctor =
+                                            await showDoctorAssignDialog();
+
+                                            // User clicked Cancel
+                                            if (selectedDoctor == null) {
+                                              return;
+                                            }
+
+                                            try {
+                                              //------------------------------------------------
+                                              // Add Patient To Queue With Doctor
+                                              //------------------------------------------------
+
+                                              await QueueRepository().addPatientToQueue(
+                                                patient,
+                                                doctorName: selectedDoctor,
+                                              );
+
+                                              if (!mounted) return;
+
+                                              //------------------------------------------------
+                                              // Refresh Patient List / Button State
+                                              //------------------------------------------------
+
+                                              await loadPatients();
+
+                                              if (!mounted) return;
+
+                                              //------------------------------------------------
+                                              // Success Message
+                                              //------------------------------------------------
+
+                                              ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                      e.toString()),
+                                                    "${patient.name} assigned to $selectedDoctor",
+                                                  ),
+                                                  backgroundColor: Colors.green,
+                                                ),
+                                              );
+                                            } catch (e) {
+                                              if (!mounted) return;
+
+                                              ScaffoldMessenger.of(context).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    e.toString(),
+                                                  ),
                                                 ),
                                               );
                                             }
                                           },
+
                                         ),
                                       ),
                                     ],

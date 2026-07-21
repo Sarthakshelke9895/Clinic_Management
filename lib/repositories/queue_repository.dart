@@ -8,7 +8,23 @@ import '../models/patient_model.dart';
 class QueueRepository {
   final _queue = FirestoreService.instance.queue;
 
-  Future<void> addPatientToQueue(Patient patient) async {
+
+  Future<void> updatePaymentStatus(
+      String queueId,
+      String paymentStatus,
+      ) async {
+    await FirebaseFirestore.instance
+        .collection('queue')
+        .doc(queueId)
+        .update({
+      'paymentStatus': paymentStatus,
+    });
+  }
+
+  Future<void> addPatientToQueue(
+      Patient patient, {
+        required String doctorName,
+      }) async {
 
     final exists =
     await isPatientAlreadyWaiting(patient.id!);
@@ -22,6 +38,8 @@ class QueueRepository {
       patientCode: patient.patientCode,
       patientName: patient.name,
       phone: patient.phone,
+      doctorName: doctorName,
+
 
       status: "Waiting",
 

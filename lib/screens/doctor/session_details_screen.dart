@@ -324,23 +324,7 @@ class SessionDetailsScreen extends StatelessWidget {
 
                   const SizedBox(width: 14),
 
-                  Expanded(
 
-                    child: buildSummaryTile(
-
-                      "",
-
-                      session.paymentStatus,
-
-                      session.paymentStatus == "Completed"
-
-                          ? Icons.check_circle_outline
-
-                          : Icons.pending_outlined,
-
-                    ),
-
-                  ),
 
                 ],
 
@@ -623,107 +607,7 @@ class SessionDetailsScreen extends StatelessWidget {
             // Status
             //----------------------------------------------------
 
-            Row(
 
-              crossAxisAlignment: CrossAxisAlignment.center,
-
-              children: [
-
-                const SizedBox(
-
-                  width: 170,
-
-                  child: Text(
-
-                    "Payment Status",
-
-                    style: TextStyle(
-
-                      fontSize: 14,
-
-                      fontWeight: FontWeight.w600,
-
-                      color: AppColors.textSecondary,
-
-                    ),
-
-                  ),
-
-                ),
-
-                const Text(
-                  ":",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                const SizedBox(width: 12),
-
-                Container(
-
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-
-                  decoration: BoxDecoration(
-
-                    color: session.paymentStatus == "Completed"
-                        ? Colors.green.withValues(alpha: .12)
-                        : Colors.orange.withValues(alpha: .12),
-
-                    borderRadius: BorderRadius.circular(20),
-
-                  ),
-
-                  child: Row(
-
-                    mainAxisSize: MainAxisSize.min,
-
-                    children: [
-
-                      Icon(
-
-                        session.paymentStatus == "Completed"
-                            ? Icons.check_circle
-                            : Icons.pending,
-
-                        size: 16,
-
-                        color: session.paymentStatus == "Completed"
-                            ? Colors.green
-                            : Colors.orange,
-
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      Text(
-
-                        session.paymentStatus,
-
-                        style: TextStyle(
-
-                          fontWeight: FontWeight.w600,
-
-                          color: session.paymentStatus == "Completed"
-                              ? Colors.green
-                              : Colors.orange,
-
-                        ),
-
-                      ),
-
-                    ],
-
-                  ),
-
-                ),
-
-              ],
-
-            ),
 
           ],
 

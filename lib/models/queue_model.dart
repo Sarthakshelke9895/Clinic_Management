@@ -11,6 +11,8 @@ class QueueModel {
 
   final String phone;
 
+  final String doctorName;
+
   final String status;
 
   final String queueDate;
@@ -35,6 +37,7 @@ class QueueModel {
     required this.patientCode,
     required this.patientName,
     required this.phone,
+
     required this.status,
     required this.queueDate,
     required this.createdAt,
@@ -43,6 +46,8 @@ class QueueModel {
 
     required this.paymentAmount,
     required this.paymentStatus,
+
+    this.doctorName = "",
   });
 
   Map<String, dynamic> toMap() {
@@ -64,6 +69,8 @@ class QueueModel {
       "paymentAmount": paymentAmount,
 
       "paymentStatus": paymentStatus,
+
+      "doctorName": doctorName,
     };
   }
 
@@ -97,6 +104,8 @@ class QueueModel {
       paymentAmount: map["paymentAmount"] ?? "",
 
       paymentStatus: map["paymentStatus"] ?? "Pending",
+
+      doctorName: map["doctorName"] ?? "",
     );
   }
 

@@ -1,3 +1,4 @@
+import 'package:REVERE/screens/doctor/doctor_workspace.dart';
 import 'package:flutter/material.dart';
 
 import '../../widgets/auth/login_form.dart';
@@ -33,7 +34,7 @@ class DoctorLoginScreen extends StatelessWidget {
 
               MaterialPageRoute(
 
-                builder: (_) => const DoctorDashboard(),
+                builder: (_) => const DoctorWorkspace(),
 
               ),
 

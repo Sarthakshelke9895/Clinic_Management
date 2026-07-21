@@ -19,13 +19,20 @@ import '../../widgets/doctor/previous_session_card.dart';
 import '../../widgets/doctor/section_card.dart';
 import '../../utils/app_colors.dart';
 
+import '../doctor/doctor_dashboard.dart';
+
 class DoctorWorkspace extends StatefulWidget {
-  const DoctorWorkspace({super.key});
+  final QueueModel? initialQueue;
+
+  const DoctorWorkspace({
+    super.key,
+    this.initialQueue,
+  });
 
   @override
-  State<DoctorWorkspace> createState() => _DoctorWorkspaceState();
+  State<DoctorWorkspace> createState() =>
+      _DoctorWorkspaceState();
 }
-
 class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
 
@@ -283,12 +290,19 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
 
   @override
+  @override
   void initState() {
-
     super.initState();
 
     loadQueue();
 
+    if (widget.initialQueue != null) {
+      selectedQueue = widget.initialQueue;
+
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        loadPatient(widget.initialQueue!.patientId);
+      });
+    }
   }
 
   //==========================================================
@@ -296,12 +310,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
 
   void loadQueue() {
-
     queueFuture =
-        queueRepository.getWaitingQueue(selectedDate);
-
+        queueRepository.getQueue(selectedDate);
   }
-
   Future<void> refreshQueue() async {
 
     loadQueue();
@@ -344,78 +355,68 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   //==========================================================
 // Load Patient
 //==========================================================
-  Future<void> loadPatient(
-      String patientId,
-      ) async {
+  Future<void> loadPatient(String patientId) async {
     try {
       //--------------------------------------------------
       // Load Patient
       //--------------------------------------------------
 
       final patient =
-      await patientRepository.getPatientById(
-        patientId,
-      );
+      await patientRepository.getPatientById(patientId);
 
-      if (patient == null) {
+      if (patient == null || !mounted) {
         return;
       }
 
       //--------------------------------------------------
-      // Reset Current Workspace State
+      // Show Patient Immediately
       //--------------------------------------------------
 
-      isEditing = false;
+      setState(() {
+        selectedPatient = patient;
 
-      editingSession = null;
+        isEditing = false;
+        editingSession = null;
 
-      sessionSavedForCurrentQueueVisit = false;
+        sessionSavedForCurrentQueueVisit = false;
+        currentQueueVisitSessionId = null;
 
-      currentQueueVisitSessionId = null;
-
-      currentQueueVisitPaymentAmount = "";
-
-      currentQueueVisitPaymentStatus = "Completed";
-
-      //--------------------------------------------------
-      // Load Latest Session
-      //--------------------------------------------------
-
-      final latestSession =
-      await sessionRepository.getLatestSession(
-        patient.id!,
-      );
+        currentQueueVisitPaymentAmount = "";
+        currentQueueVisitPaymentStatus = "Completed";
+      });
 
       //--------------------------------------------------
-      // Load Previous Sessions
+      // Load Session Data In Parallel
       //--------------------------------------------------
 
-      final patientSessions =
-      await sessionRepository.getPatientSessions(
-        patient.id!,
-      );
-
-      //--------------------------------------------------
-      // Check Widget Still Exists
-      //--------------------------------------------------
+      final results = await Future.wait([
+        sessionRepository.getLatestSession(patient.id!),
+        sessionRepository.getPatientSessions(patient.id!),
+      ]);
 
       if (!mounted) {
         return;
       }
 
       //--------------------------------------------------
-      // Update Workspace UI Once
+      // Extract Results
+      //--------------------------------------------------
+
+      final latestSession =
+      results[0] as SessionModel?;
+
+      final patientSessions =
+      results[1] as List<SessionModel>;
+
+      //--------------------------------------------------
+      // Update Patient History
       //--------------------------------------------------
 
       setState(() {
-        selectedPatient = patient;
-
         sessions = patientSessions;
 
         if (latestSession != null) {
-          populateForm(
-            latestSession,
-          );
+          populateForm(latestSession);
         } else {
           clearForm();
         }
@@ -434,7 +435,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       );
     }
   }
-
   void clearForm() {
     chiefComplaintController.clear();
     durationController.clear();
@@ -1102,7 +1102,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         paymentAmount:
         paymentAmountController.text.trim(),
 
-        paymentStatus: paymentStatus,
+        paymentStatus: "Pending",
 
         //=======================================
         // Session Note
@@ -1120,11 +1120,38 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         session,
       );
 
-      //=========================================
-      // Track Current Queue Visit Session
-      //=========================================
+//=========================================
+// Reorder Sessions By Clinical Date
+// And Recalculate Session Numbers
+//=========================================
+
+      await sessionRepository.reorderPatientSessions(
+        patient.id!,
+      );
+
+//=========================================
+// Track Current Queue Visit Session
+//=========================================
 
       sessionSavedForCurrentQueueVisit = true;
+
+      currentQueueVisitSessionId =
+          savedSessionId;
+
+      currentQueueVisitPaymentAmount =
+          session.paymentAmount;
+
+      currentQueueVisitPaymentStatus =
+          session.paymentStatus;
+
+//=========================================
+// Reload Previous Sessions
+//=========================================
+
+      sessions =
+      await sessionRepository.getPatientSessions(
+        patient.id!,
+      );
 
       currentQueueVisitSessionId =
           savedSessionId;
@@ -1949,7 +1976,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     //=========================================
 
     sessionNoteController.clear();
-
+    paymentAmountController.clear();
     //=========================================
     // Default Session Date = Today
     //=========================================
@@ -2105,9 +2132,27 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: paymentAmountController,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Amount Paid *",
+                        prefixIcon: const Icon(
+                          Icons.currency_rupee,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
+
+
 
               //=========================================
               // Actions
@@ -2138,6 +2183,35 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                   onPressed: () async {
                     final note =
                     sessionNoteController.text.trim();
+
+                    final paymentAmount =
+                    paymentAmountController.text.trim();
+                    if (paymentAmount.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter Payment Amount.",
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
+
+                    final amount =
+                    double.tryParse(paymentAmount);
+
+                    if (amount == null || amount < 0) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter a valid Payment Amount.",
+                          ),
+                        ),
+                      );
+
+                      return;
+                    }
 
                     //=================================
                     // Session Note Validation
@@ -2255,12 +2329,26 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
       await sessionRepository.updateSessionNoteAndDate(
         sessionId: session.id!,
-
         sessionNote: updatedNote,
-
         sessionDate: updatedSessionDate,
-
         saveDate: updatedSaveDate,
+      );
+
+//=========================================
+// Reorder Sessions After Date Change
+//=========================================
+
+      await sessionRepository.reorderPatientSessions(
+        selectedPatient!.id!,
+      );
+
+//=========================================
+// Reload Previous Sessions
+//=========================================
+
+      sessions =
+      await sessionRepository.getPatientSessions(
+        selectedPatient!.id!,
       );
 
       //=========================================
@@ -2519,7 +2607,12 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 IconButton(
                   tooltip: "Back",
                   onPressed: () {
-                    Navigator.maybePop(context);
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const DoctorDashboard(),
+                      ),
+                    );
                   },
                   icon: const Icon(
                     Icons.arrow_back_rounded,
@@ -2653,8 +2746,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       final patient = queue[index];
 
                       final isSelected =
-                          selectedPatient?.id ==
-                              patient.patientId;
+                          selectedQueue?.id == patient.id;
 
                       return Card(
 
@@ -2677,11 +2769,17 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           ),
 
                           onTap: () async {
+                            if (patient.status == "Completed") {
+                              return;
+                            }
+
                             setState(() {
                               selectedQueue = patient;
                             });
 
-                            await loadPatient(patient.patientId);
+                            await loadPatient(
+                              patient.patientId,
+                            );
                           },
 
                           leading: CircleAvatar(
@@ -2742,21 +2840,67 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           ),
 
                           subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 1),
+                            padding: const EdgeInsets.only(top: 6),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
+                                //------------------------------------------------
+                                // Arrival Time
+                                //------------------------------------------------
 
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.schedule_rounded,
+                                      size: 14,
+                                      color: Colors.grey.shade600,
+                                    ),
 
+                                    const SizedBox(width: 5),
 
+                                    Text(
+                                      "Arrived: ${patient.arrivalTime}",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
 
+                                const SizedBox(height: 5),
 
-                                Text(
-                                  "Arrived : ${patient.arrivalTime}",
-                                  style: TextStyle(
-                                    color: Colors.grey.shade600,
-                                    fontSize: 12,
-                                  ),
+                                //------------------------------------------------
+                                // Assigned Doctor
+                                //------------------------------------------------
+
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.medical_services_outlined,
+                                      size: 14,
+                                      color: Colors.blue.shade700,
+                                    ),
+
+                                    const SizedBox(width: 5),
+
+                                    Expanded(
+                                      child: Text(
+                                        patient.doctorName.isEmpty
+                                            ? "Doctor not assigned"
+                                            : "Assigned: ${patient.doctorName}",
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: TextStyle(
+                                          color: patient.doctorName.isEmpty
+                                              ? Colors.grey.shade600
+                                              : Colors.blue.shade700,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
@@ -2993,7 +3137,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           SectionCard(
             title: "History",
             icon: Icons.history_edu_outlined,
-            initiallyExpanded: true,
+            initiallyExpanded: false,
 
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3373,111 +3517,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 // Payment Details
 //==========================================================
 
-          SectionCard(
-            title: "Payment",
-            icon: Icons.payments_outlined,
-            initiallyExpanded: false,
 
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-
-                //==================================================
-                // Payment Amount
-                //==================================================
-
-                Expanded(
-                  child: TextFormField(
-                    controller: paymentAmountController,
-
-                    keyboardType: TextInputType.number,
-
-                    autovalidateMode:
-                    AutovalidateMode.onUserInteraction,
-
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return "Payment Amount is required";
-                      }
-
-                      final amount =
-                      double.tryParse(value.trim());
-
-                      if (amount == null) {
-                        return "Enter a valid amount";
-                      }
-
-                      if (amount < 0) {
-                        return "Amount cannot be negative";
-                      }
-
-                      return null;
-                    },
-
-                    decoration: InputDecoration(
-                      labelText: "Amount Paid *",
-
-                      prefixIcon: const Icon(
-                        Icons.currency_rupee,
-                      ),
-
-                      border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(width: 20),
-
-                //==================================================
-                // Payment Status
-                //==================================================
-
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: paymentStatus,
-
-                    decoration: InputDecoration(
-                      labelText: "Payment Status",
-
-                      prefixIcon: const Icon(
-                        Icons.payments_outlined,
-                      ),
-
-                      border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(12),
-                      ),
-                    ),
-
-                    items: const [
-                      DropdownMenuItem(
-                        value: "Completed",
-                        child: Text("Completed"),
-                      ),
-
-                      DropdownMenuItem(
-                        value: "Pending",
-                        child: Text("Pending"),
-                      ),
-                    ],
-
-                    onChanged: (value) {
-                      if (value == null) return;
-
-                      setState(() {
-                        paymentStatus = value;
-                      });
-                    },
-                  ),
-                ),
-
-              ],
-            ),
-          ),
 
           //==================================================
 // Session History
@@ -3873,12 +3913,24 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                               }
 
 
-                              await sessionRepository
-                                  .deleteSession(
-
+                              await sessionRepository.deleteSession(
                                 session.id!,
-
                               );
+
+                              await sessionRepository.reorderPatientSessions(
+                                selectedPatient!.id!,
+                              );
+
+                              sessions =
+                              await sessionRepository.getPatientSessions(
+                                selectedPatient!.id!,
+                              );
+
+                              if (!mounted) {
+                                return;
+                              }
+
+                              setState(() {});
 
 
                               //=================================
