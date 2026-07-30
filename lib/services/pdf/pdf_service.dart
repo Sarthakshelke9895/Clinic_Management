@@ -340,6 +340,12 @@ class PdfService {
           "Session Date",
           session.sessionDate,
         ),
+        _field(
+          "Treating Doctor",
+          session.treatingDoctor.isEmpty
+              ? "-"
+              : session.treatingDoctor,
+        ),
       ]),
 
       _sectionTitle("History"),

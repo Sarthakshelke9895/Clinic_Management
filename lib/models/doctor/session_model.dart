@@ -112,6 +112,8 @@ class SessionModel {
 
   final String saveDate;
 
+
+  final String treatingDoctor;
   //==================================================
   // Constructor
   //==================================================
@@ -162,7 +164,8 @@ class SessionModel {
     required this.paymentAmount,
     required this.paymentStatus,
     required this.sessionNote,
-    required this.saveDate
+    required this.saveDate,
+    required this.treatingDoctor,
 
   });
 
@@ -217,6 +220,7 @@ class SessionModel {
     String? paymentStatus,
     String? sessionNote,
     String? saveDate,
+    String? treatingDoctor,
 
 
   }) {
@@ -304,6 +308,9 @@ class SessionModel {
       saveDate:
         saveDate ?? this.saveDate,
 
+      treatingDoctor:
+      treatingDoctor ?? this.treatingDoctor,
+
     );
 
   }
@@ -371,6 +378,8 @@ class SessionModel {
       "paymentStatus": paymentStatus,
       "sessionNote": sessionNote,
       "saveDate" : saveDate,
+
+      'treatingDoctor': treatingDoctor,
 
     };
 
@@ -474,6 +483,8 @@ class SessionModel {
           map["sessionDate"] ??
           "",
 
+
+      treatingDoctor: map['treatingDoctor'] ?? "",
     );
 
   }

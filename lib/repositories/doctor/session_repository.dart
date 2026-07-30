@@ -305,6 +305,8 @@ class SessionRepository {
     required String sessionNote,
     required String sessionDate,
     required String saveDate,
+    required String treatingDoctor,
+    required String paymentAmount,
   }) async {
     await sessions
         .doc(sessionId)
@@ -319,6 +321,9 @@ class SessionRepository {
       // Human-Readable Selected Date
       // Example: 8th July 2026
       "saveDate": saveDate,
+
+      'treatingDoctor': treatingDoctor,
+      'paymentAmount': paymentAmount,
     });
   }
 

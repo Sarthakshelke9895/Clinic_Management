@@ -205,6 +205,15 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   final TextEditingController stabilityController =
   TextEditingController();
 
+
+
+
+
+
+
+  final TextEditingController treatingDoctorController =
+  TextEditingController();
+
   //==========================================================
 // Payment
 //==========================================================
@@ -460,6 +469,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     paymentStatus = "Completed";
     selectedOrigins.clear();
 
+    treatingDoctorController.clear();
+
   }
 
   //==========================================================
@@ -575,6 +586,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     paymentAmountController.clear();
 
     paymentStatus = "Completed";
+
+    treatingDoctorController.text = session.treatingDoctor;
   }
 
 
@@ -987,6 +1000,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
         address: patient.address,
 
+        treatingDoctor:
+        treatingDoctorController.text.trim(),
+
         //=======================================
         // Session Information
         //=======================================
@@ -1330,6 +1346,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     final controller = TextEditingController(
       text: session.sessionNote,
     );
+    final treatingDoctorController = TextEditingController(
+      text: session.treatingDoctor,
+    );
+
+    final paymentAmountController = TextEditingController(
+      text: session.paymentAmount,
+    );
 
     // Parse existing machine-friendly date.
     // Example: 2026-07-08
@@ -1522,6 +1545,46 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         ),
                       ),
                     ),
+
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: treatingDoctorController,
+                      readOnly: !isEditingSession,
+                      decoration: InputDecoration(
+                        labelText: "Treating Doctor",
+                        filled: !isEditingSession,
+                        fillColor: !isEditingSession
+                            ? Colors.grey.shade100
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+
+                    const SizedBox(height: 20),
+
+                    TextFormField(
+                      controller: paymentAmountController,
+                      readOnly: !isEditingSession,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: "Amount Paid",
+                        prefixText: "₹ ",
+                        filled: !isEditingSession,
+                        fillColor: !isEditingSession
+                            ? Colors.grey.shade100
+                            : null,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+
+
                   ],
                 ),
               ),
@@ -1595,6 +1658,40 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         return;
                       }
 
+
+                      final updatedDoctor =
+                      treatingDoctorController.text.trim();
+
+                      final updatedAmount =
+                      paymentAmountController.text.trim();
+
+                      if (updatedDoctor.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Treating Doctor cannot be empty."),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (updatedAmount.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Amount cannot be empty."),
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (double.tryParse(updatedAmount) == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text("Enter a valid amount."),
+                          ),
+                        );
+                        return;
+                      }
+
                       //=============================
                       // Calculate Updated Dates
                       //=============================
@@ -1622,8 +1719,16 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           updatedSessionDate !=
                               session.sessionDate;
 
+                      final doctorChanged =
+                          updatedDoctor != session.treatingDoctor;
+
+                      final amountChanged =
+                          updatedAmount != session.paymentAmount;
+
                       if (!noteChanged &&
-                          !dateChanged) {
+                          !dateChanged &&
+                          !doctorChanged &&
+                          !amountChanged){
                         setDialogState(() {
                           isEditingSession = false;
                         });
@@ -1646,15 +1751,11 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       final success =
                       await updateSessionNoteAndDate(
                         session: session,
-
-                        updatedNote:
-                        updatedNote,
-
-                        updatedSessionDate:
-                        updatedSessionDate,
-
-                        updatedSaveDate:
-                        updatedSaveDate,
+                        updatedNote: updatedNote,
+                        updatedSessionDate: updatedSessionDate,
+                        updatedSaveDate: updatedSaveDate,
+                        updatedTreatingDoctor: updatedDoctor,
+                        updatedPaymentAmount: updatedAmount,
                       );
 
                       if (!dialogContext.mounted) {
@@ -1683,6 +1784,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     );
 
     controller.dispose();
+    treatingDoctorController.dispose();
+    paymentAmountController.dispose();
+
   }
   Future<void> updateSession() async {
     try {
@@ -1878,6 +1982,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
         sessionNote:
         editingSession!.sessionNote,
+
+
+        treatingDoctor: treatingDoctorController.text.trim(),
       );
 
       //-------------------------------------------------------
@@ -1977,6 +2084,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
     sessionNoteController.clear();
     paymentAmountController.clear();
+    treatingDoctorController.clear();
     //=========================================
     // Default Session Date = Today
     //=========================================
@@ -2136,6 +2244,20 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                     const SizedBox(height: 20),
 
                     TextFormField(
+                      controller: treatingDoctorController,
+                      decoration: InputDecoration(
+                        labelText: "Treating Doctor *",
+                        hintText: "Enter doctor's name",
+                        prefixIcon: const Icon(Icons.medical_services_outlined),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    TextFormField(
                       controller: paymentAmountController,
                       keyboardType: TextInputType.number,
                       decoration: InputDecoration(
@@ -2195,6 +2317,19 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         ),
                       );
 
+                      return;
+                    }
+
+                    final treatingDoctor =
+                    treatingDoctorController.text.trim();
+                    if (treatingDoctor.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Please enter Treating Doctor.",
+                          ),
+                        ),
+                      );
                       return;
                     }
 
@@ -2301,6 +2436,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     required String updatedNote,
     required String updatedSessionDate,
     required String updatedSaveDate,
+    required String updatedTreatingDoctor,
+    required String updatedPaymentAmount,
   }) async {
     try {
       //=========================================
@@ -2332,6 +2469,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
         sessionNote: updatedNote,
         sessionDate: updatedSessionDate,
         saveDate: updatedSaveDate,
+        treatingDoctor: updatedTreatingDoctor,
+        paymentAmount: updatedPaymentAmount,
       );
 
 //=========================================
@@ -2518,6 +2657,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     adviceController.dispose();
     paymentAmountController.dispose();
     sessionNoteController.dispose();
+
+    treatingDoctorController.dispose();
 
 
     super.dispose();
@@ -2874,34 +3015,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                                 // Assigned Doctor
                                 //------------------------------------------------
 
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.medical_services_outlined,
-                                      size: 14,
-                                      color: Colors.blue.shade700,
-                                    ),
 
-                                    const SizedBox(width: 5),
-
-                                    Expanded(
-                                      child: Text(
-                                        patient.doctorName.isEmpty
-                                            ? "Doctor not assigned"
-                                            : "Assigned: ${patient.doctorName}",
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: TextStyle(
-                                          color: patient.doctorName.isEmpty
-                                              ? Colors.grey.shade600
-                                              : Colors.blue.shade700,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w600,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
                               ],
                             ),
                           ),
@@ -3137,74 +3251,101 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           SectionCard(
             title: "History",
             icon: Icons.history_edu_outlined,
-            initiallyExpanded: false,
+            initiallyExpanded: true,
 
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 700) {
+                  // Mobile / Small Screen
+                  return Column(
+                    children: [
 
-                SizedBox(
-                  width: 420,
-                  child: TextFormField(
-                    controller:
-                    chiefComplaintController,
+                      TextFormField(
+                        controller: chiefComplaintController,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Chief Complaint is required";
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Chief Complaint *",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
 
-                    autovalidateMode:
-                    AutovalidateMode.onUserInteraction,
+                      const SizedBox(height: 20),
 
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return "Chief Complaint is required";
-                      }
+                      TextFormField(
+                        controller: durationController,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Duration is required";
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Duration *",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
+                }
 
-                      return null;
-                    },
+                // Desktop / Tablet
+                return Row(
+                  children: [
 
-                    decoration: InputDecoration(
-                      labelText: "Chief Complaint *",
-
-                      border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: chiefComplaintController,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Chief Complaint is required";
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Chief Complaint *",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
 
-                const SizedBox(width: 20),
+                    const SizedBox(width: 20),
 
-                SizedBox(
-                  width: 220,
-                  child: TextFormField(
-                    controller:
-                    durationController,
-
-                    autovalidateMode:
-                    AutovalidateMode.onUserInteraction,
-
-                    validator: (value) {
-                      if (value == null ||
-                          value.trim().isEmpty) {
-                        return "Duration is required";
-                      }
-
-                      return null;
-                    },
-
-                    decoration: InputDecoration(
-                      labelText: "Duration *",
-
-                      border: OutlineInputBorder(
-                        borderRadius:
-                        BorderRadius.circular(12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: durationController,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return "Duration is required";
+                          }
+                          return null;
+                        },
+                        decoration: InputDecoration(
+                          labelText: "Duration *",
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                ),
-
-              ],
-            )
+                  ],
+                );
+              },
+            ),
           ),
 
 

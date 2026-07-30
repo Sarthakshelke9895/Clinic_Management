@@ -302,32 +302,29 @@ class SessionDetailsScreen extends StatelessWidget {
               const SizedBox(height: 14),
 
               Row(
-
                 children: [
-
                   Expanded(
-
                     child: buildSummaryTile(
-
                       "Amount",
-
                       session.paymentAmount.isEmpty
                           ? "-"
-
                           : "₹ ${session.paymentAmount}",
-
                       Icons.currency_rupee,
-
                     ),
-
                   ),
 
                   const SizedBox(width: 14),
 
-
-
+                  Expanded(
+                    child: buildSummaryTile(
+                      "Treating Doctor",
+                      session.treatingDoctor.isEmpty
+                          ? "-"
+                          : session.treatingDoctor,
+                      Icons.medical_services_outlined,
+                    ),
+                  ),
                 ],
-
               ),
 
             ],
@@ -580,37 +577,32 @@ class SessionDetailsScreen extends StatelessWidget {
           const SizedBox(height: 20),
 
         buildSectionCard(
-
           icon: Icons.payments_outlined,
-
           title: "Payment Details",
-
           children: [
 
-            //----------------------------------------------------
-            // Amount
-            //----------------------------------------------------
-
             buildInfoTile(
-
-              "Amount Paid",
-
-              session.paymentAmount.isEmpty
-                  ? "Not Added"
-                  : "₹ ${session.paymentAmount}",
-
+              "Treating Doctor",
+              session.treatingDoctor,
             ),
 
             const SizedBox(height: 4),
 
-            //----------------------------------------------------
-            // Status
-            //----------------------------------------------------
+            buildInfoTile(
+              "Amount Paid",
+              session.paymentAmount.isEmpty
+                  ? "Not Added"
+                  : "₹ ${session.paymentAmount}",
+            ),
 
+            const SizedBox(height: 4),
 
+            buildInfoTile(
+              "Payment Status",
+              session.paymentStatus,
+            ),
 
           ],
-
         ),
 
         const SizedBox(height: 20),

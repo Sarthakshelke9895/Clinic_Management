@@ -645,46 +645,26 @@ class _PatientSearchScreenState
                                           onPressed: waiting
                                               ? null
                                               : () async {
-                                            //------------------------------------------------
-                                            // Open Doctor Assignment Dialog
-                                            //------------------------------------------------
-
-                                            final selectedDoctor =
-                                            await showDoctorAssignDialog();
-
-                                            // User clicked Cancel
-                                            if (selectedDoctor == null) {
-                                              return;
-                                            }
-
                                             try {
                                               //------------------------------------------------
-                                              // Add Patient To Queue With Doctor
+                                              // Add Patient To Queue WITHOUT assigning doctor
                                               //------------------------------------------------
 
                                               await QueueRepository().addPatientToQueue(
                                                 patient,
-                                                doctorName: selectedDoctor,
+                                                doctorName: "",
                                               );
 
                                               if (!mounted) return;
-
-                                              //------------------------------------------------
-                                              // Refresh Patient List / Button State
-                                              //------------------------------------------------
 
                                               await loadPatients();
 
                                               if (!mounted) return;
 
-                                              //------------------------------------------------
-                                              // Success Message
-                                              //------------------------------------------------
-
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
                                                   content: Text(
-                                                    "${patient.name} assigned to $selectedDoctor",
+                                                    "${patient.name} added to queue successfully.",
                                                   ),
                                                   backgroundColor: Colors.green,
                                                 ),
@@ -694,9 +674,7 @@ class _PatientSearchScreenState
 
                                               ScaffoldMessenger.of(context).showSnackBar(
                                                 SnackBar(
-                                                  content: Text(
-                                                    e.toString(),
-                                                  ),
+                                                  content: Text(e.toString()),
                                                 ),
                                               );
                                             }

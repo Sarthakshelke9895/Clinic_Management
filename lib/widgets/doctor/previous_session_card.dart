@@ -140,7 +140,6 @@ class PreviousSessionCard extends StatelessWidget {
                     Wrap(
                       spacing: 10,
                       runSpacing: 8,
-
                       children: [
 
                         //------------------------------------------------
@@ -148,41 +147,66 @@ class PreviousSessionCard extends StatelessWidget {
                         //------------------------------------------------
 
                         Container(
-                          padding:
-                          const EdgeInsets.symmetric(
+                          padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 5,
                           ),
-
                           decoration: BoxDecoration(
                             color: Colors.blue.shade50,
-
-                            borderRadius:
-                            BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(20),
                           ),
-
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-
                             children: [
-
                               const Icon(
                                 Icons.currency_rupee,
                                 size: 15,
                                 color: Colors.blue,
                               ),
-
                               Text(
                                 session.paymentAmount.isEmpty
                                     ? "N/A"
                                     : session.paymentAmount,
-
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue,
                                 ),
                               ),
+                            ],
+                          ),
+                        ),
 
+                        //------------------------------------------------
+                        // Treating Doctor
+                        //------------------------------------------------
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.shade50,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.medical_services_outlined,
+                                size: 15,
+                                color: Colors.green,
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                session.treatingDoctor.isEmpty
+                                    ? "N/A"
+                                    : session.treatingDoctor,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
                             ],
                           ),
                         ),
@@ -191,7 +215,7 @@ class PreviousSessionCard extends StatelessWidget {
                         // Payment Status
                         //------------------------------------------------
 
-
+                        // Your payment status container here
 
                       ],
                     ),
