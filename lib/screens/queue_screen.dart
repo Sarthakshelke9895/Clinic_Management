@@ -527,30 +527,7 @@ class _QueueScreenState extends State<QueueScreen> {
                                           // Assigned Doctor
                                           //--------------------------------------------------
 
-                                          Icon(
-                                            Icons.medical_services_outlined,
-                                            size: 15,
-                                            color: Colors.blue.shade700,
-                                          ),
 
-                                          const SizedBox(width: 5),
-
-                                          Flexible(
-                                            child: Text(
-                                              patient.doctorName.isEmpty
-                                                  ? "Doctor not assigned"
-                                                  : patient.doctorName,
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: TextStyle(
-                                                color: patient.doctorName.isEmpty
-                                                    ? Colors.grey.shade500
-                                                    : Colors.blue.shade700,
-                                                fontSize: 12,
-                                                fontWeight: FontWeight.w600,
-                                              ),
-                                            ),
-                                          ),
                                         ],
                                       ),
                                     ),

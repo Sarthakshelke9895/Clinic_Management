@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 import '../../models/patient_model.dart';
 import '../../models/queue_model.dart';
@@ -43,7 +44,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   Widget _buildTextField(
       String label,
       TextEditingController controller, {
-        bool isRequired = true,
+        bool isRequired = false,
       }) {
     return SizedBox(
       width: 260,
@@ -66,7 +67,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
         decoration: InputDecoration(
           labelText:
-          isRequired ? "$label *" : label,
+          isRequired ? "$label " : label,
 
           border: OutlineInputBorder(
             borderRadius:
@@ -81,7 +82,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       String label,
       TextEditingController controller, {
         int maxLines = 3,
-        bool isRequired = true,
+        bool isRequired = false,
       }) {
     return TextFormField(
       controller: controller,
@@ -104,7 +105,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
       decoration: InputDecoration(
         labelText:
-        isRequired ? "$label *" : label,
+        isRequired ? "$label " : label,
 
         alignLabelWithHint: true,
 
@@ -1568,15 +1569,16 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                     TextFormField(
                       controller: paymentAmountController,
-                      readOnly: !isEditingSession,
                       keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(7),
+                      ],
                       decoration: InputDecoration(
                         labelText: "Amount Paid",
-                        prefixText: "₹ ",
-                        filled: !isEditingSession,
-                        fillColor: !isEditingSession
-                            ? Colors.grey.shade100
-                            : null,
+                        prefixIcon: const Icon(
+                          Icons.currency_rupee,
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1645,18 +1647,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       final updatedNote =
                       controller.text.trim();
 
-                      if (updatedNote.isEmpty) {
-                        ScaffoldMessenger.of(context)
-                            .showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Session Note cannot be empty.",
-                            ),
-                          ),
-                        );
-
-                        return;
-                      }
 
 
                       final updatedDoctor =
@@ -1665,33 +1655,31 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       final updatedAmount =
                       paymentAmountController.text.trim();
 
-                      if (updatedDoctor.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Treating Doctor cannot be empty."),
-                          ),
-                        );
-                        return;
-                      }
 
-                      if (updatedAmount.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Amount cannot be empty."),
-                          ),
-                        );
-                        return;
-                      }
 
-                      if (double.tryParse(updatedAmount) == null) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text("Enter a valid amount."),
-                          ),
-                        );
-                        return;
-                      }
+                      if (updatedAmount.isNotEmpty) {
+                        final amount = int.tryParse(updatedAmount);
 
+                        if (amount == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text("Enter a valid amount."),
+                            ),
+                          );
+                          return;
+                        }
+
+                        if (updatedAmount.length > 7) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                "Payment Amount cannot exceed 7 digits.",
+                              ),
+                            ),
+                          );
+                          return;
+                        }
+                      }
                       //=============================
                       // Calculate Updated Dates
                       //=============================
@@ -2077,6 +2065,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     }
   }
 
+
   Future<void> showAddSessionDialog() async {
     //=========================================
     // Always Start With Empty Session Note
@@ -2085,6 +2074,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     sessionNoteController.clear();
     paymentAmountController.clear();
     treatingDoctorController.clear();
+
     //=========================================
     // Default Session Date = Today
     //=========================================
@@ -2094,11 +2084,20 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     await showDialog(
       context: context,
       barrierDismissible: false,
-
       builder: (dialogContext) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final screenWidth = MediaQuery.of(context).size.width;
+            final screenHeight = MediaQuery.of(context).size.height;
+
+            final isSmallScreen = screenWidth < 600;
+
             return AlertDialog(
+              insetPadding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 12 : 24,
+                vertical: isSmallScreen ? 16 : 24,
+              ),
+
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -2107,16 +2106,25 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
               // Title
               //=========================================
 
-              title: const Row(
+              titlePadding: EdgeInsets.fromLTRB(
+                isSmallScreen ? 20 : 24,
+                20,
+                isSmallScreen ? 12 : 16,
+                12,
+              ),
+
+              title: Row(
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.note_add_outlined,
                   ),
 
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
 
-                  Text(
-                    "Add Session",
+                  const Expanded(
+                    child: Text(
+                      "Add Session",
+                    ),
                   ),
                 ],
               ),
@@ -2125,71 +2133,154 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
               // Dialog Content
               //=========================================
 
+              contentPadding: EdgeInsets.zero,
+
               content: SizedBox(
-                width: 520,
+                width: isSmallScreen
+                    ? screenWidth * 0.90
+                    : 560,
 
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                height: screenHeight * 0.68,
 
-                  crossAxisAlignment:
-                  CrossAxisAlignment.start,
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(
+                    isSmallScreen ? 20 : 24,
+                    8,
+                    isSmallScreen ? 20 : 24,
+                    24,
+                  ),
 
-                  children: [
-                    //===================================
-                    // Session Date Label
-                    //===================================
+                  child: Column(
+                    crossAxisAlignment:
+                    CrossAxisAlignment.stretch,
 
-                    const Text(
-                      "Session Date *",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
+                    children: [
+
+                      //===================================
+                      // Session Date Label
+                      //===================================
+
+                      const Text(
+                        "Session Date",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
 
-                    const SizedBox(height: 8),
+                      const SizedBox(height: 8),
 
-                    //===================================
-                    // Session Date Picker
-                    //===================================
+                      //===================================
+                      // Session Date Picker
+                      //===================================
 
-                    InkWell(
-                      borderRadius:
-                      BorderRadius.circular(12),
+                      InkWell(
+                        borderRadius:
+                        BorderRadius.circular(12),
 
-                      onTap: () async {
-                        final pickedDate =
-                        await showDatePicker(
-                          context: dialogContext,
+                        onTap: () async {
+                          final pickedDate =
+                          await showDatePicker(
+                            context: dialogContext,
 
-                          initialDate:
-                          selectedSessionDate,
+                            initialDate:
+                            selectedSessionDate,
 
-                          firstDate:
-                          DateTime(2020),
+                            firstDate:
+                            DateTime(2020),
 
-                          lastDate:
-                          DateTime(2100),
-                        );
+                            lastDate:
+                            DateTime(2100),
+                          );
 
-                        if (pickedDate == null) {
-                          return;
-                        }
+                          if (pickedDate == null) {
+                            return;
+                          }
 
-                        setDialogState(() {
-                          selectedSessionDate =
-                              pickedDate;
-                        });
-                      },
+                          setDialogState(() {
+                            selectedSessionDate =
+                                pickedDate;
+                          });
+                        },
 
-                      child: InputDecorator(
-                        decoration: InputDecoration(
-                          prefixIcon: const Icon(
-                            Icons.calendar_month_outlined,
+                        child: InputDecorator(
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(
+                              Icons.calendar_month_outlined,
+                            ),
+
+                            suffixIcon: const Icon(
+                              Icons.keyboard_arrow_down_rounded,
+                            ),
+
+                            border: OutlineInputBorder(
+                              borderRadius:
+                              BorderRadius.circular(12),
+                            ),
                           ),
 
-                          suffixIcon: const Icon(
-                            Icons.keyboard_arrow_down_rounded,
+                          child: Text(
+                            formatSessionSaveDate(
+                              selectedSessionDate,
+                            ),
+
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      //===================================
+                      // Session Note Field
+                      //===================================
+
+                      TextFormField(
+                        controller:
+                        sessionNoteController,
+
+                        autofocus: true,
+
+                        maxLines: 8,
+
+                        decoration: InputDecoration(
+                          labelText:
+                          "Session Note",
+
+                          hintText:
+                          "Enter session note...",
+
+                          alignLabelWithHint: true,
+
+                          border: OutlineInputBorder(
+                            borderRadius:
+                            BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      //===================================
+                      // Treating Doctor
+                      //===================================
+
+                      TextFormField(
+                        controller:
+                        treatingDoctorController,
+
+                        decoration: InputDecoration(
+                          labelText:
+                          "Treating Doctor",
+
+                          hintText:
+                          "Enter doctor's name",
+
+                          prefixIcon: const Icon(
+                            Icons.medical_services_outlined,
                           ),
 
                           border: OutlineInputBorder(
@@ -2197,88 +2288,59 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                             BorderRadius.circular(12),
                           ),
                         ),
+                      ),
 
-                        child: Text(
-                          formatSessionSaveDate(
-                            selectedSessionDate,
+                      const SizedBox(height: 20),
+
+                      //===================================
+                      // Payment Amount
+                      //===================================
+
+                      TextFormField(
+                        controller:
+                        paymentAmountController,
+
+                        keyboardType:
+                        TextInputType.number,
+
+                        inputFormatters: [
+                          FilteringTextInputFormatter
+                              .digitsOnly,
+
+                          LengthLimitingTextInputFormatter(
+                            7,
+                          ),
+                        ],
+
+                        decoration: InputDecoration(
+                          labelText:
+                          "Amount Paid",
+
+                          prefixIcon: const Icon(
+                            Icons.currency_rupee,
                           ),
 
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                          border: OutlineInputBorder(
+                            borderRadius:
+                            BorderRadius.circular(12),
                           ),
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    //===================================
-                    // Session Note Field
-                    //===================================
-
-                    TextFormField(
-                      controller:
-                      sessionNoteController,
-
-                      autofocus: true,
-
-                      maxLines: 8,
-
-                      decoration: InputDecoration(
-                        labelText:
-                        "Session Note *",
-
-                        hintText:
-                        "Enter session note...",
-
-                        alignLabelWithHint: true,
-
-                        border: OutlineInputBorder(
-                          borderRadius:
-                          BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      controller: treatingDoctorController,
-                      decoration: InputDecoration(
-                        labelText: "Treating Doctor *",
-                        hintText: "Enter doctor's name",
-                        prefixIcon: const Icon(Icons.medical_services_outlined),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      controller: paymentAmountController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(
-                        labelText: "Amount Paid *",
-                        prefixIcon: const Icon(
-                          Icons.currency_rupee,
-                        ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-
-
 
               //=========================================
               // Actions
               //=========================================
+
+              actionsPadding: EdgeInsets.fromLTRB(
+                isSmallScreen ? 16 : 24,
+                12,
+                isSmallScreen ? 16 : 24,
+                16,
+              ),
 
               actions: [
                 TextButton(
@@ -2293,6 +2355,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                   ),
                 ),
 
+                const SizedBox(width: 8),
+
                 FilledButton.icon(
                   icon: const Icon(
                     Icons.save_outlined,
@@ -2304,66 +2368,62 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                   onPressed: () async {
                     final note =
-                    sessionNoteController.text.trim();
+                    sessionNoteController
+                        .text
+                        .trim();
 
                     final paymentAmount =
-                    paymentAmountController.text.trim();
-                    if (paymentAmount.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please enter Payment Amount.",
-                          ),
-                        ),
-                      );
-
-                      return;
-                    }
+                    paymentAmountController
+                        .text
+                        .trim();
 
                     final treatingDoctor =
-                    treatingDoctorController.text.trim();
-                    if (treatingDoctor.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please enter Treating Doctor.",
-                          ),
-                        ),
-                      );
-                      return;
-                    }
+                    treatingDoctorController
+                        .text
+                        .trim();
 
-                    final amount =
-                    double.tryParse(paymentAmount);
+                    //=================================
+                    // Payment Validation
+                    //=================================
 
-                    if (amount == null || amount < 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please enter a valid Payment Amount.",
-                          ),
-                        ),
+                    if (paymentAmount.isNotEmpty) {
+                      final amount =
+                      int.tryParse(
+                        paymentAmount,
                       );
 
-                      return;
+                      if (amount == null) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Please enter a valid Payment Amount.",
+                            ),
+                          ),
+                        );
+
+                        return;
+                      }
+
+                      if (paymentAmount.length > 7) {
+                        ScaffoldMessenger.of(context)
+                            .showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Payment Amount cannot exceed 7 digits.",
+                            ),
+                          ),
+                        );
+
+                        return;
+                      }
                     }
 
                     //=================================
                     // Session Note Validation
                     //=================================
 
-                    if (note.isEmpty) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Please enter Session Note.",
-                          ),
-                        ),
-                      );
-
-                      return;
-                    }
+                    // Session Note is optional.
 
                     //=================================
                     // Copy Values Before Closing Dialog
@@ -2399,6 +2459,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       },
     );
   }
+
   Future<void> cancelSessionEditing() async {
     isEditing = false;
     editingSession = null;
@@ -2602,19 +2663,15 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     // Validate Origin
     //=========================================
 
-    final isOriginValid =
-        selectedOrigins.isNotEmpty;
 
 
-    if (!isFormValid || !isOriginValid) {
+
+    if (!isFormValid) {
 
       String message =
           "Please fill all required consultation fields.";
 
-      if (!isOriginValid) {
-        message =
-        "Please select at least one Origin.";
-      }
+
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -3251,94 +3308,47 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           SectionCard(
             title: "History",
             icon: Icons.history_edu_outlined,
-            initiallyExpanded: true,
+            initiallyExpanded: false,
 
             child: LayoutBuilder(
               builder: (context, constraints) {
-                if (constraints.maxWidth < 700) {
-                  // Mobile / Small Screen
-                  return Column(
-                    children: [
-
-                      TextFormField(
-                        controller: chiefComplaintController,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Chief Complaint is required";
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Chief Complaint *",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      TextFormField(
-                        controller: durationController,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Duration is required";
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Duration *",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }
-
-                // Desktop / Tablet
-                return Row(
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
 
-                    Expanded(
-                      child: TextFormField(
-                        controller: chiefComplaintController,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Chief Complaint is required";
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Chief Complaint *",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    // ==========================================
+                    // Chief Complaint
+                    // ==========================================
+                    TextFormField(
+                      controller: chiefComplaintController,
+                      minLines: 5,
+                      maxLines: 5,
+                      keyboardType: TextInputType.multiline,
+                      textInputAction: TextInputAction.newline,
+
+                      decoration: InputDecoration(
+                        labelText: "Chief Complaint",
+                        alignLabelWithHint: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
 
-                    const SizedBox(width: 20),
+                    const SizedBox(height: 20),
 
-                    Expanded(
-                      child: TextFormField(
-                        controller: durationController,
-                        autovalidateMode: AutovalidateMode.onUserInteraction,
-                        validator: (value) {
-                          if (value == null || value.trim().isEmpty) {
-                            return "Duration is required";
-                          }
-                          return null;
-                        },
-                        decoration: InputDecoration(
-                          labelText: "Duration *",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                    // ==========================================
+                    // Duration
+                    // ==========================================
+                    TextFormField(
+                      controller: durationController,
+                      minLines: 1,
+                      maxLines: 2,
+
+                      decoration: InputDecoration(
+                        labelText: "Duration",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
