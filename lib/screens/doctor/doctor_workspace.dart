@@ -1569,6 +1569,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                     TextFormField(
                       controller: paymentAmountController,
+                      readOnly: !isEditingSession,
                       keyboardType: TextInputType.number,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -1579,6 +1580,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         prefixIcon: const Icon(
                           Icons.currency_rupee,
                         ),
+                        filled: !isEditingSession,
+                        fillColor: !isEditingSession
+                            ? Colors.grey.shade100
+                            : null,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -2097,7 +2102,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 horizontal: isSmallScreen ? 12 : 24,
                 vertical: isSmallScreen ? 16 : 24,
               ),
-
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(18),
               ),
@@ -2135,82 +2139,139 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
               contentPadding: EdgeInsets.zero,
 
-              content: SizedBox(
-                width: isSmallScreen
-                    ? screenWidth * 0.90
-                    : 560,
+              content: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxHeight: screenHeight * 0.75,
+                ),
+                child: SizedBox(
+                  width: isSmallScreen
+                      ? screenWidth * 0.90
+                      : 560,
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.fromLTRB(
+                      isSmallScreen ? 20 : 24,
+                      8,
+                      isSmallScreen ? 20 : 24,
+                      24,
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment:
+                      CrossAxisAlignment.stretch,
+                      children: [
 
-                height: screenHeight * 0.68,
+                        //===================================
+                        // Session Date Label
+                        //===================================
 
-                child: SingleChildScrollView(
-                  padding: EdgeInsets.fromLTRB(
-                    isSmallScreen ? 20 : 24,
-                    8,
-                    isSmallScreen ? 20 : 24,
-                    24,
-                  ),
-
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.stretch,
-
-                    children: [
-
-                      //===================================
-                      // Session Date Label
-                      //===================================
-
-                      const Text(
-                        "Session Date",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                        const Text(
+                          "Session Date",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
-                      ),
 
-                      const SizedBox(height: 8),
+                        const SizedBox(height: 8),
 
-                      //===================================
-                      // Session Date Picker
-                      //===================================
+                        //===================================
+                        // Session Date Picker
+                        //===================================
 
-                      InkWell(
-                        borderRadius:
-                        BorderRadius.circular(12),
+                        InkWell(
+                          borderRadius:
+                          BorderRadius.circular(12),
 
-                        onTap: () async {
-                          final pickedDate =
-                          await showDatePicker(
-                            context: dialogContext,
+                          onTap: () async {
+                            final pickedDate =
+                            await showDatePicker(
+                              context: dialogContext,
+                              initialDate:
+                              selectedSessionDate,
+                              firstDate:
+                              DateTime(2020),
+                              lastDate:
+                              DateTime(2100),
+                            );
 
-                            initialDate:
-                            selectedSessionDate,
+                            if (pickedDate == null) {
+                              return;
+                            }
 
-                            firstDate:
-                            DateTime(2020),
+                            setDialogState(() {
+                              selectedSessionDate =
+                                  pickedDate;
+                            });
+                          },
 
-                            lastDate:
-                            DateTime(2100),
-                          );
-
-                          if (pickedDate == null) {
-                            return;
-                          }
-
-                          setDialogState(() {
-                            selectedSessionDate =
-                                pickedDate;
-                          });
-                        },
-
-                        child: InputDecorator(
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.calendar_month_outlined,
+                          child: InputDecorator(
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(
+                                Icons.calendar_month_outlined,
+                              ),
+                              suffixIcon: const Icon(
+                                Icons.keyboard_arrow_down_rounded,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius:
+                                BorderRadius.circular(12),
+                              ),
                             ),
+                            child: Text(
+                              formatSessionSaveDate(
+                                selectedSessionDate,
+                              ),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
 
-                            suffixIcon: const Icon(
-                              Icons.keyboard_arrow_down_rounded,
+                        const SizedBox(height: 20),
+
+                        //===================================
+                        // Session Note Field
+                        //===================================
+
+                        TextFormField(
+                          controller:
+                          sessionNoteController,
+
+                          autofocus: false,
+
+                          maxLines: 8,
+
+                          decoration: InputDecoration(
+                            labelText: "Session Note",
+                            hintText:
+                            "Enter session note...",
+                            alignLabelWithHint: true,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                              BorderRadius.circular(12),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        //===================================
+                        // Treating Doctor
+                        //===================================
+
+                        TextFormField(
+                          controller:
+                          treatingDoctorController,
+
+                          decoration: InputDecoration(
+                            labelText: "Treating Doctor",
+                            hintText:
+                            "Enter doctor's name",
+
+                            prefixIcon: const Icon(
+                              Icons.medical_services_outlined,
                             ),
 
                             border: OutlineInputBorder(
@@ -2218,115 +2279,45 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                               BorderRadius.circular(12),
                             ),
                           ),
+                        ),
 
-                          child: Text(
-                            formatSessionSaveDate(
-                              selectedSessionDate,
+                        const SizedBox(height: 20),
+
+                        //===================================
+                        // Payment Amount
+                        //===================================
+
+                        TextFormField(
+                          controller:
+                          paymentAmountController,
+
+                          keyboardType:
+                          TextInputType.number,
+
+                          inputFormatters: [
+                            FilteringTextInputFormatter
+                                .digitsOnly,
+
+                            LengthLimitingTextInputFormatter(
+                              7,
+                            ),
+                          ],
+
+                          decoration: InputDecoration(
+                            labelText: "Amount Paid",
+
+                            prefixIcon: const Icon(
+                              Icons.currency_rupee,
                             ),
 
-                            style: const TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.w500,
+                            border: OutlineInputBorder(
+                              borderRadius:
+                              BorderRadius.circular(12),
                             ),
                           ),
                         ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      //===================================
-                      // Session Note Field
-                      //===================================
-
-                      TextFormField(
-                        controller:
-                        sessionNoteController,
-
-                        autofocus: true,
-
-                        maxLines: 8,
-
-                        decoration: InputDecoration(
-                          labelText:
-                          "Session Note",
-
-                          hintText:
-                          "Enter session note...",
-
-                          alignLabelWithHint: true,
-
-                          border: OutlineInputBorder(
-                            borderRadius:
-                            BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      //===================================
-                      // Treating Doctor
-                      //===================================
-
-                      TextFormField(
-                        controller:
-                        treatingDoctorController,
-
-                        decoration: InputDecoration(
-                          labelText:
-                          "Treating Doctor",
-
-                          hintText:
-                          "Enter doctor's name",
-
-                          prefixIcon: const Icon(
-                            Icons.medical_services_outlined,
-                          ),
-
-                          border: OutlineInputBorder(
-                            borderRadius:
-                            BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      //===================================
-                      // Payment Amount
-                      //===================================
-
-                      TextFormField(
-                        controller:
-                        paymentAmountController,
-
-                        keyboardType:
-                        TextInputType.number,
-
-                        inputFormatters: [
-                          FilteringTextInputFormatter
-                              .digitsOnly,
-
-                          LengthLimitingTextInputFormatter(
-                            7,
-                          ),
-                        ],
-
-                        decoration: InputDecoration(
-                          labelText:
-                          "Amount Paid",
-
-                          prefixIcon: const Icon(
-                            Icons.currency_rupee,
-                          ),
-
-                          border: OutlineInputBorder(
-                            borderRadius:
-                            BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -2368,19 +2359,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                   onPressed: () async {
                     final note =
-                    sessionNoteController
-                        .text
-                        .trim();
+                    sessionNoteController.text.trim();
 
                     final paymentAmount =
-                    paymentAmountController
-                        .text
-                        .trim();
+                    paymentAmountController.text.trim();
 
                     final treatingDoctor =
-                    treatingDoctorController
-                        .text
-                        .trim();
+                    treatingDoctorController.text.trim();
 
                     //=================================
                     // Payment Validation
@@ -2388,9 +2373,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                     if (paymentAmount.isNotEmpty) {
                       final amount =
-                      int.tryParse(
-                        paymentAmount,
-                      );
+                      int.tryParse(paymentAmount);
 
                       if (amount == null) {
                         ScaffoldMessenger.of(context)
@@ -3308,7 +3291,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           SectionCard(
             title: "History",
             icon: Icons.history_edu_outlined,
-            initiallyExpanded: false,
+            initiallyExpanded: true,
 
             child: LayoutBuilder(
               builder: (context, constraints) {
@@ -3814,317 +3797,149 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       //=====================================
 
                       sortedSessions.sort(
-                            (a, b) {
-
-                          final aDate =
-                          DateTime.tryParse(
-                            a.sessionDate,
-                          );
-
-                          final bDate =
-                          DateTime.tryParse(
-                            b.sessionDate,
-                          );
-
-
-                          //=================================
-                          // Handle Invalid / Empty Dates
-                          //=================================
-
-                          if (aDate == null &&
-                              bDate == null) {
-
-                            return b.sessionNumber.compareTo(
-                              a.sessionNumber,
-                            );
-                          }
-
-
-                          if (aDate == null) {
-                            return 1;
-                          }
-
-
-                          if (bDate == null) {
-                            return -1;
-                          }
-
-
-                          //=================================
-                          // Compare Session Dates
-                          //=================================
-
-                          final dateComparison =
-                          bDate.compareTo(
-                            aDate,
-                          );
-
-
-                          //=================================
-                          // Different Dates
-                          //=================================
-
-                          if (dateComparison != 0) {
-                            return dateComparison;
-                          }
-
-
-                          //=================================
-                          // Same Date
-                          //
-                          // Higher Session Number First
-                          //=================================
-
-                          return b.sessionNumber.compareTo(
-                            a.sessionNumber,
-                          );
-
-                        },
+                            (a, b) => a.sessionNumber.compareTo(b.sessionNumber),
                       );
-
 
                       //=====================================
                       // Display Sorted Sessions
                       //=====================================
 
-                      return ListView.separated(
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          int crossAxisCount;
 
-                        shrinkWrap:
-                        true,
+                          if (constraints.maxWidth < 600) {
+                            // Mobile
+                            crossAxisCount = 1;
+                          } else {
+                            // Tablet / Desktop
+                            crossAxisCount = 4;
+                          }
 
-                        physics:
-                        const NeverScrollableScrollPhysics(),
+                          return GridView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
 
-                        itemCount:
-                        sortedSessions.length,
+                            gridDelegate:
+                            SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: crossAxisCount,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              mainAxisExtent: 230,
+                            ),
 
-                        separatorBuilder:
-                            (_, __) =>
-                        const SizedBox(
-                          height: 12,
-                        ),
+                            itemCount: sortedSessions.length,
 
-                        itemBuilder:
-                            (context, index) {
+                            itemBuilder: (context, index) {
+                              final session = sortedSessions[index];
 
-                          final session =
-                          sortedSessions[index];
+                              return PreviousSessionCard(
+                                session: session,
 
+                                onTap: () {
+                                  showSessionNoteDialog(session);
+                                },
 
-                          return PreviousSessionCard(
+                                onEdit: () {
+                                  loadSession(session);
+                                },
 
-                            session:
-                            session,
+                                onView: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          SessionDetailsScreen(
+                                            session: session,
+                                          ),
+                                    ),
+                                  );
+                                },
 
+                                onPdf: () async {
+                                  await PdfService.instance
+                                      .generateSessionPdf(
+                                    session,
+                                  );
+                                },
 
-                            //=================================
-                            // Open Session Note
-                            //=================================
-
-                            onTap: () {
-
-                              showSessionNoteDialog(
-                                session,
-                              );
-
-                            },
-
-
-                            //=================================
-                            // Edit Session
-                            //=================================
-
-                            onEdit: () {
-
-                              loadSession(
-                                session,
-                              );
-
-                            },
-
-
-                            //=================================
-                            // View Session
-                            //=================================
-
-                            onView: () {
-
-                              Navigator.push(
-
-                                context,
-
-                                MaterialPageRoute(
-
-                                  builder: (_) =>
-                                      SessionDetailsScreen(
-
-                                        session:
-                                        session,
-
-                                      ),
-
-                                ),
-
-                              );
-
-                            },
-
-
-                            //=================================
-                            // Generate PDF
-                            //=================================
-
-                            onPdf: () async {
-
-                              await PdfService.instance
-                                  .generateSessionPdf(
-
-                                session,
-
-                              );
-
-                            },
-
-
-                            //=================================
-                            // Delete Session
-                            //=================================
-
-                            onDelete: () async {
-
-                              final confirm =
-                              await showDialog<bool>(
-
-                                context:
-                                context,
-
-                                builder:
-                                    (_) =>
-                                    AlertDialog(
-
-                                      title:
-                                      const Text(
+                                onDelete: () async {
+                                  final confirm =
+                                  await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text(
                                         "Delete Session",
                                       ),
-
-                                      content:
-                                      const Text(
+                                      content: const Text(
                                         "Are you sure you want to delete this session?",
                                       ),
-
                                       actions: [
-
                                         TextButton(
-
-                                          onPressed:
-                                              () {
-
+                                          onPressed: () {
                                             Navigator.pop(
                                               context,
                                               false,
                                             );
-
                                           },
-
-                                          child:
-                                          const Text(
+                                          child: const Text(
                                             "Cancel",
                                           ),
-
                                         ),
-
                                         FilledButton(
-
-                                          onPressed:
-                                              () {
-
+                                          onPressed: () {
                                             Navigator.pop(
                                               context,
                                               true,
                                             );
-
                                           },
-
-                                          child:
-                                          const Text(
+                                          child: const Text(
                                             "Delete",
                                           ),
-
                                         ),
-
                                       ],
-
                                     ),
+                                  );
 
+                                  if (confirm != true) {
+                                    return;
+                                  }
+
+                                  await sessionRepository
+                                      .deleteSession(
+                                    session.id!,
+                                  );
+
+                                  await sessionRepository
+                                      .reorderPatientSessions(
+                                    selectedPatient!.id!,
+                                  );
+
+                                  sessions =
+                                  await sessionRepository
+                                      .getPatientSessions(
+                                    selectedPatient!.id!,
+                                  );
+
+                                  if (!mounted) {
+                                    return;
+                                  }
+
+                                  setState(() {});
+
+                                  ScaffoldMessenger.of(context)
+                                      .showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        "Session Deleted Successfully",
+                                      ),
+                                    ),
+                                  );
+                                },
                               );
-
-
-                              if (confirm != true) {
-                                return;
-                              }
-
-
-                              await sessionRepository.deleteSession(
-                                session.id!,
-                              );
-
-                              await sessionRepository.reorderPatientSessions(
-                                selectedPatient!.id!,
-                              );
-
-                              sessions =
-                              await sessionRepository.getPatientSessions(
-                                selectedPatient!.id!,
-                              );
-
-                              if (!mounted) {
-                                return;
-                              }
-
-                              setState(() {});
-
-
-                              //=================================
-                              // Reload Sessions
-                              //=================================
-
-                              sessions =
-                              await sessionRepository
-                                  .getPatientSessions(
-
-                                selectedPatient!.id!,
-
-                              );
-
-
-                              if (!mounted) {
-                                return;
-                              }
-
-
-                              setState(() {});
-
-
-                              ScaffoldMessenger.of(context)
-                                  .showSnackBar(
-
-                                const SnackBar(
-
-                                  content:
-                                  Text(
-                                    "Session Deleted Successfully",
-                                  ),
-
-                                ),
-
-                              );
-
                             },
-
                           );
-
                         },
-
                       );
 
                     },
