@@ -1,188 +1,288 @@
 import 'package:flutter/material.dart';
 
 class SectionCard extends StatefulWidget {
+  final String id;
   final String title;
   final IconData icon;
   final Widget child;
   final bool initiallyExpanded;
 
+  final String? expandedSectionId;
+  final ValueChanged<String?>? onExpansionChanged;
+
   const SectionCard({
     super.key,
+    required this.id,
     required this.title,
     required this.icon,
     required this.child,
     this.initiallyExpanded = true,
+    this.expandedSectionId,
+    this.onExpansionChanged,
   });
 
   @override
-  State<SectionCard> createState() => _SectionCardState();
+  State<SectionCard> createState() =>
+      _SectionCardState();
 }
 
 class _SectionCardState extends State<SectionCard>
     with TickerProviderStateMixin {
-
   late bool isExpanded;
 
   @override
   void initState() {
     super.initState();
-    isExpanded = widget.initiallyExpanded;
+
+    isExpanded =
+    widget.expandedSectionId != null
+        ? widget.expandedSectionId == widget.id
+        : widget.initiallyExpanded;
+  }
+
+  @override
+  void didUpdateWidget(
+      covariant SectionCard oldWidget,
+      ) {
+    super.didUpdateWidget(oldWidget);
+
+    final newExpandedState =
+        widget.expandedSectionId == widget.id;
+
+    if (isExpanded != newExpandedState) {
+      setState(() {
+        isExpanded = newExpandedState;
+      });
+    }
+  }
+
+  void _handleTap() {
+    if (widget.onExpansionChanged != null) {
+      if (isExpanded) {
+        widget.onExpansionChanged!(null);
+      } else {
+        widget.onExpansionChanged!(widget.id);
+      }
+
+      return;
+    }
+
+    setState(() {
+      isExpanded = !isExpanded;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final primary =
+        Theme.of(context).primaryColor;
 
-    final primary = Theme.of(context).primaryColor;
-
-    return Card(
-      elevation: 1,
-      margin: const EdgeInsets.only(bottom: 10),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
+    return Container(
+      margin: const EdgeInsets.only(
+        bottom: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+        BorderRadius.circular(12),
+        border: Border.all(
+          color: isExpanded
+              ? primary.withOpacity(.18)
+              : Colors.grey.shade200,
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(.035),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       clipBehavior: Clip.antiAlias,
-
       child: AnimatedSize(
-        duration: const Duration(milliseconds: 250),
+        duration:
+        const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-
         child: Column(
-
           children: [
+            //==================================================
+            // HEADER
+            //==================================================
 
-            //--------------------------------------------------
-            // Header
-            //--------------------------------------------------
+            Material(
+              color: isExpanded
+                  ? primary.withOpacity(.025)
+                  : Colors.white,
+              child: InkWell(
+                onTap: _handleTap,
+                splashColor:
+                primary.withOpacity(.06),
+                highlightColor:
+                primary.withOpacity(.025),
+                child: Padding(
+                  padding:
+                  const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  child: Row(
+                    children: [
+                      //========================================
+                      // ICON
+                      //========================================
 
-            InkWell(
-
-              onTap: () {
-
-                setState(() {
-
-                  isExpanded = !isExpanded;
-
-                });
-
-              },
-
-              child: Padding(
-
-                padding: const EdgeInsets.fromLTRB(
-                  16,
-                  14,
-                  16,
-                  14,
-                ),
-
-                child: Row(
-
-                  children: [
-
-                    Container(
-
-                      height: 35,
-                      width: 35,
-
-                      decoration: BoxDecoration(
-
-                        color: primary.withOpacity(.08),
-
-                        borderRadius:
-                        BorderRadius.circular(8),
-
-                      ),
-
-                      child: Icon(
-                        widget.icon,
-                        color: primary,
-                        size: 22,
-                      ),
-
-                    ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-
-                      child: Text(
-
-                        widget.title,
-
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
+                      AnimatedContainer(
+                        duration:
+                        const Duration(
+                          milliseconds: 200,
                         ),
-
+                        height: 38,
+                        width: 38,
+                        decoration: BoxDecoration(
+                          color: isExpanded
+                              ? primary
+                              .withOpacity(.12)
+                              : primary
+                              .withOpacity(.07),
+                          borderRadius:
+                          BorderRadius.circular(
+                            9,
+                          ),
+                        ),
+                        child: Icon(
+                          widget.icon,
+                          color: primary,
+                          size: 20,
+                        ),
                       ),
 
-                    ),
+                      const SizedBox(width: 13),
 
-                    AnimatedRotation(
+                      //========================================
+                      // TITLE
+                      //========================================
 
-                      turns: isExpanded ? .5 : 0,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              widget.title,
+                              maxLines: 1,
+                              overflow:
+                              TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight:
+                                FontWeight.w600,
+                                color:
+                                Colors.grey.shade900,
+                                letterSpacing:
+                                -0.1,
+                              ),
+                            ),
 
-                      duration: const Duration(
-                        milliseconds: 250,
+                            if (isExpanded) ...[
+                              const SizedBox(height: 3),
+
+                              Text(
+                                "Expanded",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight:
+                                  FontWeight.w500,
+                                  color:
+                                  primary.withOpacity(
+                                    .75,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
 
-                      child: Icon(
+                      const SizedBox(width: 10),
 
-                        Icons.keyboard_arrow_down_rounded,
+                      //========================================
+                      // ARROW
+                      //========================================
 
-                        color: Colors.grey.shade700,
-
-                        size: 28,
-
+                      AnimatedContainer(
+                        duration:
+                        const Duration(
+                          milliseconds: 200,
+                        ),
+                        height: 32,
+                        width: 32,
+                        decoration: BoxDecoration(
+                          color: isExpanded
+                              ? primary
+                              .withOpacity(.08)
+                              : Colors.grey
+                              .shade100,
+                          shape: BoxShape.circle,
+                        ),
+                        child: AnimatedRotation(
+                          turns:
+                          isExpanded ? .5 : 0,
+                          duration:
+                          const Duration(
+                            milliseconds: 250,
+                          ),
+                          curve: Curves.easeOut,
+                          child: Icon(
+                            Icons
+                                .keyboard_arrow_down_rounded,
+                            color: isExpanded
+                                ? primary
+                                : Colors.grey
+                                .shade600,
+                            size: 21,
+                          ),
+                        ),
                       ),
-
-                    ),
-
-                  ],
-
+                    ],
+                  ),
                 ),
-
               ),
-
             ),
 
-            //--------------------------------------------------
-            // Divider
-            //--------------------------------------------------
+            //==================================================
+            // DIVIDER
+            //==================================================
 
             if (isExpanded)
               Divider(
                 height: 1,
-                color: Colors.grey.shade200,
+                thickness: 1,
+                color: primary.withOpacity(.08),
               ),
 
-            //--------------------------------------------------
-            // Body
-            //--------------------------------------------------
+            //==================================================
+            // BODY
+            //==================================================
 
             if (isExpanded)
-
-              Padding(
-
-                padding: const EdgeInsets.fromLTRB(
-                  20,
-                  20,
-                  20,
-                  20,
+              Container(
+                width: double.infinity,
+                color: Colors.white,
+                child: Padding(
+                  padding:
+                  const EdgeInsets.fromLTRB(
+                    20,
+                    18,
+                    20,
+                    20,
+                  ),
+                  child: widget.child,
                 ),
-
-                child: widget.child,
-
               ),
-
           ],
-
         ),
-
       ),
-
     );
-
   }
-
 }

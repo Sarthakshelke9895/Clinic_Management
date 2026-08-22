@@ -133,6 +133,11 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
   SessionModel? editingSession;
   bool sessionSavedForCurrentQueueVisit = false;
 
+  //==========================================================
+// Section Accordion
+//==========================================================
+
+  String? expandedSectionId = "history";
 
   String? currentQueueVisitSessionId;
   String currentQueueVisitPaymentAmount = "";
@@ -3176,67 +3181,117 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           // Patient Details Card
           //==================================================
 
-          Card(
-            elevation: 1,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+          Container(
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.grey.shade200,
+                width: 1,
+              ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 16,
+              padding: const EdgeInsets.fromLTRB(
+                18,
+                16,
+                18,
+                15,
               ),
               child: Column(
                 children: [
 
-                  //--------------------------------------------------
-                  // Row 1
-                  //--------------------------------------------------
+                  //==================================================
+                  // PATIENT HEADER
+                  //==================================================
 
                   Row(
                     children: [
 
-                      CircleAvatar(
-                        radius: 22,
-                        backgroundColor: Theme.of(context).primaryColor,
-                        child: Text(
-                          selectedPatient!.name[0].toUpperCase(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 14),
-
-                      Expanded(
-                        child: Text(
-                          selectedPatient!.name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-
+                      // Patient Avatar
                       Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                        height: 46,
+                        width: 46,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context)
+                              .primaryColor
+                              .withOpacity(.09),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Center(
+                          child: Text(
+                            selectedPatient!.name.isNotEmpty
+                                ? selectedPatient!.name[0]
+                                .toUpperCase()
+                                : "?",
+                            style: TextStyle(
+                              color: Theme.of(context)
+                                  .primaryColor,
+                              fontSize: 18,
+                              fontWeight:
+                              FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(width: 12),
+
+                      // Patient Name
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment:
+                          CrossAxisAlignment.start,
+                          children: [
+
+                            Text(
+                              selectedPatient!.name,
+                              maxLines: 1,
+                              overflow:
+                              TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight:
+                                FontWeight.w700,
+                              ),
+                            ),
+
+                            const SizedBox(height: 2),
+
+                            Text(
+                              "Patient",
+                              style: TextStyle(
+                                fontSize: 11,
+                                color:
+                                Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Patient Code
+                      Container(
+                        padding:
+                        const EdgeInsets.symmetric(
+                          horizontal: 10,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
                           color: Theme.of(context)
                               .primaryColor
-                              .withOpacity(.08),
-                          borderRadius: BorderRadius.circular(8),
+                              .withOpacity(.07),
+                          borderRadius:
+                          BorderRadius.circular(8),
                         ),
                         child: Text(
                           selectedPatient!.patientCode,
                           style: TextStyle(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context)
+                                .primaryColor,
+                            fontSize: 11,
+                            fontWeight:
+                            FontWeight.w700,
                           ),
                         ),
                       ),
@@ -3245,43 +3300,73 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                   const SizedBox(height: 14),
 
-                  //--------------------------------------------------
-                  // Row 2
-                  //--------------------------------------------------
+                  //==================================================
+                  // DIVIDER
+                  //==================================================
 
-                  Wrap(
-                    spacing: 24,
-                    runSpacing: 10,
-                    children: [
-
-                      _compactInfo(
-                        Icons.phone_outlined,
-                        selectedPatient!.phone,
-                      ),
-
-                      _compactInfo(
-                        Icons.person_outline,
-                        selectedPatient!.gender,
-                      ),
-
-                      _compactInfo(
-                        Icons.cake_outlined,
-                        "${selectedPatient!.age} Years",
-                      ),
-
-                      _compactInfo(
-                        Icons.location_on_outlined,
-                        selectedPatient!.address,
-                      ),
-
-                    ],
+                  Divider(
+                    height: 1,
+                    color: Colors.grey.shade200,
                   ),
 
+                  const SizedBox(height: 13),
+
+                  //==================================================
+                  // PATIENT DETAILS
+                  //==================================================
+
+                  Row(
+                    children: [
+
+                      Expanded(
+                        child: _patientInfoItem(
+                          icon: Icons.phone_outlined,
+                          label: "Phone",
+                          value:
+                          selectedPatient!.phone,
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: _patientInfoItem(
+                          icon: Icons.person_outline,
+                          label: "Gender",
+                          value:
+                          selectedPatient!.gender,
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        child: _patientInfoItem(
+                          icon: Icons.cake_outlined,
+                          label: "Age",
+                          value:
+                          "${selectedPatient!.age} Years",
+                        ),
+                      ),
+
+                      const SizedBox(width: 10),
+
+                      Expanded(
+                        flex: 2,
+                        child: _patientInfoItem(
+                          icon:
+                          Icons.location_on_outlined,
+                          label: "Address",
+                          value:
+                          selectedPatient!.address,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
-
           const SizedBox(height: 20),
 
           //==================================================
@@ -3289,31 +3374,45 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
           //==================================================
 
           SectionCard(
+            id: "history",
             title: "History",
             icon: Icons.history_edu_outlined,
             initiallyExpanded: true,
 
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
+
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  crossAxisAlignment:
+                  CrossAxisAlignment.stretch,
                   children: [
 
                     // ==========================================
                     // Chief Complaint
                     // ==========================================
                     TextFormField(
-                      controller: chiefComplaintController,
+                      controller:
+                      chiefComplaintController,
                       minLines: 5,
                       maxLines: 5,
-                      keyboardType: TextInputType.multiline,
-                      textInputAction: TextInputAction.newline,
+                      keyboardType:
+                      TextInputType.multiline,
+                      textInputAction:
+                      TextInputAction.newline,
 
                       decoration: InputDecoration(
                         labelText: "Chief Complaint",
                         alignLabelWithHint: true,
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                          BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -3324,14 +3423,16 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                     // Duration
                     // ==========================================
                     TextFormField(
-                      controller: durationController,
+                      controller:
+                      durationController,
                       minLines: 1,
                       maxLines: 2,
 
                       decoration: InputDecoration(
                         labelText: "Duration",
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius:
+                          BorderRadius.circular(12),
                         ),
                       ),
                     ),
@@ -3348,9 +3449,18 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
+            id: "symptom",
             title: "Symptom Evaluation",
             icon: Icons.monitor_heart_outlined,
             initiallyExpanded: false,
+
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3391,7 +3501,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       "Q - Quality",
                       qualityController,
                     ),
-
                   ],
                 ),
 
@@ -3418,13 +3527,14 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       "T - Timing",
                       timingController,
                     ),
-
                   ],
                 ),
 
                 const SizedBox(height: 30),
 
-                Divider(color: Colors.grey.shade300),
+                Divider(
+                  color: Colors.grey.shade300,
+                ),
 
                 const SizedBox(height: 25),
 
@@ -3463,7 +3573,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       "Nature",
                       natureController,
                     ),
-
                   ],
                 ),
 
@@ -3483,10 +3592,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       "Stability",
                       stabilityController,
                     ),
-
                   ],
                 ),
-
               ],
             ),
           ),
@@ -3498,9 +3605,18 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
+            id: "origin",
             title: "Origin",
             icon: Icons.hub_outlined,
             initiallyExpanded: false,
+
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
 
             child: Wrap(
               spacing: 12,
@@ -3508,10 +3624,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
               children: origins.map((origin) {
 
-                final selected = selectedOrigins.contains(origin);
+                final selected =
+                selectedOrigins.contains(origin);
 
                 return FilterChip(
-
                   label: Text(
                     origin,
                     style: TextStyle(
@@ -3526,9 +3642,11 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                   showCheckmark: false,
 
-                  selectedColor: Theme.of(context).primaryColor,
+                  selectedColor:
+                  Theme.of(context).primaryColor,
 
-                  backgroundColor: Colors.grey.shade100,
+                  backgroundColor:
+                  Colors.grey.shade100,
 
                   side: BorderSide(
                     color: selected
@@ -3536,33 +3654,27 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         : Colors.grey.shade300,
                   ),
 
-                  padding: const EdgeInsets.symmetric(
+                  padding:
+                  const EdgeInsets.symmetric(
                     horizontal: 12,
                     vertical: 10,
                   ),
 
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                  shape:
+                  RoundedRectangleBorder(
+                    borderRadius:
+                    BorderRadius.circular(10),
                   ),
 
                   onSelected: (value) {
-
                     setState(() {
-
                       if (value) {
-
                         selectedOrigins.add(origin);
-
                       } else {
-
                         selectedOrigins.remove(origin);
-
                       }
-
                     });
-
                   },
-
                 );
 
               }).toList(),
@@ -3577,21 +3689,35 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
+            id: "assessment",
             title: "Assessment",
             icon: Icons.medical_information_outlined,
             initiallyExpanded: false,
+
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
+
             child: Column(
               children: [
                 _buildMultilineField(
                   "Biomechanical Findings",
                   biomechanicalController,
                 ),
+
                 const SizedBox(height: 20),
+
                 _buildMultilineField(
                   "Osteopathic Findings",
                   osteopathicController,
                 ),
+
                 const SizedBox(height: 20),
+
                 _buildMultilineField(
                   "Other Findings",
                   otherFindingsController,
@@ -3607,9 +3733,18 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
+            id: "rx",
             title: "Rx Goal / Advice",
             icon: Icons.healing_outlined,
             initiallyExpanded: false,
+
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
 
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -3658,14 +3793,21 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 //==================================================
 
           SectionCard(
-            title:
-            "Previous Sessions (${sessions.length})",
+            id: "sessions",
 
-            icon:
-            Icons.history_outlined,
+            title: "Previous Sessions (${sessions.length})",
 
-            initiallyExpanded:
-            false,
+            icon: Icons.history_outlined,
+
+            initiallyExpanded: false,
+
+            expandedSectionId: expandedSectionId,
+
+            onExpansionChanged: (id) {
+              setState(() {
+                expandedSectionId = id;
+              });
+            },
 
             child: Column(
               crossAxisAlignment:
@@ -3684,7 +3826,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                   children: [
 
                     FilledButton.icon(
-
                       onPressed: isEditing
                           ? null
                           : handleAddSession,
@@ -3696,15 +3837,12 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       label: const Text(
                         "Add Session",
                       ),
-
                     ),
 
                   ],
                 ),
 
-
                 const SizedBox(height: 16),
-
 
                 //=========================================
                 // Empty State
@@ -3713,26 +3851,19 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 if (sessions.isEmpty)
 
                   Container(
-                    width:
-                    double.infinity,
+                    width: double.infinity,
 
                     padding:
                     const EdgeInsets.all(40),
 
-                    decoration:
-                    BoxDecoration(
-
-                      color:
-                      Colors.grey.shade100,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
 
                       borderRadius:
                       BorderRadius.circular(12),
-
                     ),
 
-                    child:
-                    const Column(
-
+                    child: const Column(
                       children: [
 
                         Icon(
@@ -3754,10 +3885,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         ),
 
                       ],
-
                     ),
                   )
-
 
                 //=========================================
                 // Sessions List
@@ -3780,24 +3909,18 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         sessions.cast<SessionModel>(),
                       );
 
-
                       //=====================================
                       // Sort Sessions
                       //
-                      // Primary:
-                      // sessionDate DESCENDING
-                      //
-                      // 3rd July
-                      // 2nd July
-                      // 1st July
-                      //
-                      // Secondary:
-                      // Higher sessionNumber first when
-                      // dates are equal.
+                      // Session number:
+                      // 1 → 2 → 3 → 4
                       //=====================================
 
                       sortedSessions.sort(
-                            (a, b) => a.sessionNumber.compareTo(b.sessionNumber),
+                            (a, b) =>
+                            a.sessionNumber.compareTo(
+                              b.sessionNumber,
+                            ),
                       );
 
                       //=====================================
@@ -3805,7 +3928,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                       //=====================================
 
                       return LayoutBuilder(
-                        builder: (context, constraints) {
+                        builder:
+                            (context, constraints) {
+
                           int crossAxisCount;
 
                           if (constraints.maxWidth < 600) {
@@ -3818,31 +3943,57 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                           return GridView.builder(
                             shrinkWrap: true,
-                            physics: const NeverScrollableScrollPhysics(),
+
+                            physics:
+                            const NeverScrollableScrollPhysics(),
 
                             gridDelegate:
                             SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: crossAxisCount,
+                              crossAxisCount:
+                              crossAxisCount,
+
                               crossAxisSpacing: 12,
+
                               mainAxisSpacing: 12,
+
                               mainAxisExtent: 230,
                             ),
 
-                            itemCount: sortedSessions.length,
+                            itemCount:
+                            sortedSessions.length,
 
-                            itemBuilder: (context, index) {
-                              final session = sortedSessions[index];
+                            itemBuilder:
+                                (context, index) {
+
+                              final session =
+                              sortedSessions[index];
 
                               return PreviousSessionCard(
                                 session: session,
 
+                                //================================
+                                // Open Session
+                                //================================
+
                                 onTap: () {
-                                  showSessionNoteDialog(session);
+                                  showSessionNoteDialog(
+                                    session,
+                                  );
                                 },
 
+                                //================================
+                                // Edit Session
+                                //================================
+
                                 onEdit: () {
-                                  loadSession(session);
+                                  loadSession(
+                                    session,
+                                  );
                                 },
+
+                                //================================
+                                // View Session
+                                //================================
 
                                 onView: () {
                                   Navigator.push(
@@ -3856,6 +4007,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                                   );
                                 },
 
+                                //================================
+                                // Generate PDF
+                                //================================
+
                                 onPdf: () async {
                                   await PdfService.instance
                                       .generateSessionPdf(
@@ -3863,57 +4018,86 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                                   );
                                 },
 
+                                //================================
+                                // Delete Session
+                                //================================
+
                                 onDelete: () async {
+
                                   final confirm =
                                   await showDialog<bool>(
                                     context: context,
-                                    builder: (_) => AlertDialog(
-                                      title: const Text(
-                                        "Delete Session",
-                                      ),
-                                      content: const Text(
-                                        "Are you sure you want to delete this session?",
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () {
-                                            Navigator.pop(
-                                              context,
-                                              false,
-                                            );
-                                          },
-                                          child: const Text(
-                                            "Cancel",
+
+                                    builder: (_) =>
+                                        AlertDialog(
+                                          title: const Text(
+                                            "Delete Session",
                                           ),
-                                        ),
-                                        FilledButton(
-                                          onPressed: () {
-                                            Navigator.pop(
-                                              context,
-                                              true,
-                                            );
-                                          },
-                                          child: const Text(
-                                            "Delete",
+
+                                          content:
+                                          const Text(
+                                            "Are you sure you want to delete this session?",
                                           ),
+
+                                          actions: [
+
+                                            TextButton(
+                                              onPressed: () {
+                                                Navigator.pop(
+                                                  context,
+                                                  false,
+                                                );
+                                              },
+
+                                              child:
+                                              const Text(
+                                                "Cancel",
+                                              ),
+                                            ),
+
+                                            FilledButton(
+                                              onPressed: () {
+                                                Navigator.pop(
+                                                  context,
+                                                  true,
+                                                );
+                                              },
+
+                                              child:
+                                              const Text(
+                                                "Delete",
+                                              ),
+                                            ),
+
+                                          ],
                                         ),
-                                      ],
-                                    ),
                                   );
 
                                   if (confirm != true) {
                                     return;
                                   }
 
+                                  //================================
+                                  // Delete
+                                  //================================
+
                                   await sessionRepository
                                       .deleteSession(
                                     session.id!,
                                   );
 
+                                  //================================
+                                  // Reorder Sessions
+                                  //================================
+
                                   await sessionRepository
                                       .reorderPatientSessions(
                                     selectedPatient!.id!,
                                   );
+
+                                  //================================
+                                  // Reload Sessions
+                                  //================================
 
                                   sessions =
                                   await sessionRepository
@@ -3927,8 +4111,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                                   setState(() {});
 
-                                  ScaffoldMessenger.of(context)
-                                      .showSnackBar(
+                                  //================================
+                                  // Success Message
+                                  //================================
+
+                                  ScaffoldMessenger.of(
+                                    context,
+                                  ).showSnackBar(
                                     const SnackBar(
                                       content: Text(
                                         "Session Deleted Successfully",
@@ -3941,10 +4130,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           );
                         },
                       );
-
                     },
                   ),
-
               ],
             ),
           ),
@@ -4153,4 +4340,74 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
   }
 
+
+
+  Widget _patientInfoItem({
+    required IconData icon,
+    required String label,
+    required String value,
+  }) {
+    final primary =
+        Theme.of(context).primaryColor;
+
+    return Row(
+      children: [
+
+        Container(
+          height: 30,
+          width: 30,
+          decoration: BoxDecoration(
+            color: primary.withOpacity(.07),
+            borderRadius:
+            BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            size: 15,
+            color: primary,
+          ),
+        ),
+
+        const SizedBox(width: 8),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment:
+            CrossAxisAlignment.start,
+            children: [
+
+              Text(
+                label,
+                maxLines: 1,
+                overflow:
+                TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey.shade500,
+                  fontWeight:
+                  FontWeight.w500,
+                ),
+              ),
+
+              const SizedBox(height: 2),
+
+              Text(
+                value.isEmpty
+                    ? "Not provided"
+                    : value,
+                maxLines: 1,
+                overflow:
+                TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight:
+                  FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 }
