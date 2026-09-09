@@ -3956,7 +3956,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                               mainAxisSpacing: 12,
 
-                              mainAxisExtent: 230,
+                              mainAxisExtent: 150,
                             ),
 
                             itemCount:
