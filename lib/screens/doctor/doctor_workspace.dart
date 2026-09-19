@@ -3941,194 +3941,166 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                             crossAxisCount = 4;
                           }
 
-                          return GridView.builder(
-                            shrinkWrap: true,
+                              return LayoutBuilder(
+                              builder: (context, constraints) {
+                              final spacing = 12.0;
 
-                            physics:
-                            const NeverScrollableScrollPhysics(),
+                              final cardWidth = crossAxisCount == 1
+                              ? constraints.maxWidth
+                                  : (constraints.maxWidth -
+                              (spacing * (crossAxisCount - 1))) /
+                              crossAxisCount;
 
-                            gridDelegate:
-                            SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount:
-                              crossAxisCount,
+                              return Wrap(
+                              spacing: spacing,
+                              runSpacing: spacing,
+                              children: sortedSessions.map((session) {
+                              return SizedBox(
+                              width: cardWidth,
+                              child: PreviousSessionCard(
+                              session: session,
 
-                              crossAxisSpacing: 12,
+                              //================================
+                              // Open Session
+                              //================================
 
-                              mainAxisSpacing: 12,
-
-                              mainAxisExtent: 150,
-                            ),
-
-                            itemCount:
-                            sortedSessions.length,
-
-                            itemBuilder:
-                                (context, index) {
-
-                              final session =
-                              sortedSessions[index];
-
-                              return PreviousSessionCard(
-                                session: session,
-
-                                //================================
-                                // Open Session
-                                //================================
-
-                                onTap: () {
-                                  showSessionNoteDialog(
-                                    session,
-                                  );
-                                },
-
-                                //================================
-                                // Edit Session
-                                //================================
-
-                                onEdit: () {
-                                  loadSession(
-                                    session,
-                                  );
-                                },
-
-                                //================================
-                                // View Session
-                                //================================
-
-                                onView: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          SessionDetailsScreen(
-                                            session: session,
-                                          ),
-                                    ),
-                                  );
-                                },
-
-                                //================================
-                                // Generate PDF
-                                //================================
-
-                                onPdf: () async {
-                                  await PdfService.instance
-                                      .generateSessionPdf(
-                                    session,
-                                  );
-                                },
-
-                                //================================
-                                // Delete Session
-                                //================================
-
-                                onDelete: () async {
-
-                                  final confirm =
-                                  await showDialog<bool>(
-                                    context: context,
-
-                                    builder: (_) =>
-                                        AlertDialog(
-                                          title: const Text(
-                                            "Delete Session",
-                                          ),
-
-                                          content:
-                                          const Text(
-                                            "Are you sure you want to delete this session?",
-                                          ),
-
-                                          actions: [
-
-                                            TextButton(
-                                              onPressed: () {
-                                                Navigator.pop(
-                                                  context,
-                                                  false,
-                                                );
-                                              },
-
-                                              child:
-                                              const Text(
-                                                "Cancel",
-                                              ),
-                                            ),
-
-                                            FilledButton(
-                                              onPressed: () {
-                                                Navigator.pop(
-                                                  context,
-                                                  true,
-                                                );
-                                              },
-
-                                              child:
-                                              const Text(
-                                                "Delete",
-                                              ),
-                                            ),
-
-                                          ],
-                                        ),
-                                  );
-
-                                  if (confirm != true) {
-                                    return;
-                                  }
-
-                                  //================================
-                                  // Delete
-                                  //================================
-
-                                  await sessionRepository
-                                      .deleteSession(
-                                    session.id!,
-                                  );
-
-                                  //================================
-                                  // Reorder Sessions
-                                  //================================
-
-                                  await sessionRepository
-                                      .reorderPatientSessions(
-                                    selectedPatient!.id!,
-                                  );
-
-                                  //================================
-                                  // Reload Sessions
-                                  //================================
-
-                                  sessions =
-                                  await sessionRepository
-                                      .getPatientSessions(
-                                    selectedPatient!.id!,
-                                  );
-
-                                  if (!mounted) {
-                                    return;
-                                  }
-
-                                  setState(() {});
-
-                                  //================================
-                                  // Success Message
-                                  //================================
-
-                                  ScaffoldMessenger.of(
-                                    context,
-                                  ).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        "Session Deleted Successfully",
-                                      ),
-                                    ),
-                                  );
-                                },
+                              onTap: () {
+                              showSessionNoteDialog(
+                              session,
                               );
+                              },
+
+                              //================================
+                              // Edit Session
+                              //================================
+
+                              onEdit: () {
+                              loadSession(
+                              session,
+                              );
+                              },
+
+                              //================================
+                              // View Session
+                              //================================
+
+                              onView: () {
+                              Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                              builder: (_) => SessionDetailsScreen(
+                              session: session,
+                              ),
+                              ),
+                              );
+                              },
+
+                              //================================
+                              // Generate PDF
+                              //================================
+
+                              onPdf: () async {
+                              await PdfService.instance.generateSessionPdf(
+                              session,
+                              );
+                              },
+
+                              //================================
+                              // Delete Session
+                              //================================
+
+                              onDelete: () async {
+                              final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                              title: const Text(
+                              "Delete Session",
+                              ),
+                              content: const Text(
+                              "Are you sure you want to delete this session?",
+                              ),
+                              actions: [
+                              TextButton(
+                              onPressed: () {
+                              Navigator.pop(
+                              context,
+                              false,
+                              );
+                              },
+                              child: const Text(
+                              "Cancel",
+                              ),
+                              ),
+                              FilledButton(
+                              onPressed: () {
+                              Navigator.pop(
+                              context,
+                              true,
+                              );
+                              },
+                              child: const Text(
+                              "Delete",
+                              ),
+                              ),
+                              ],
+                              ),
+                              );
+
+                              if (confirm != true) {
+                              return;
+                              }
+
+                              //================================
+                              // Delete
+                              //================================
+
+                              await sessionRepository.deleteSession(
+                              session.id!,
+                              );
+
+                              //================================
+                              // Reorder Sessions
+                              //================================
+
+                              await sessionRepository.reorderPatientSessions(
+                              selectedPatient!.id!,
+                              );
+
+                              //================================
+                              // Reload Sessions
+                              //================================
+
+                              sessions = await sessionRepository.getPatientSessions(
+                              selectedPatient!.id!,
+                              );
+
+                              if (!mounted) {
+                              return;
+                              }
+
+                              setState(() {});
+
+                              //================================
+                              // Success Message
+                              //================================
+
+                              ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                              content: Text(
+                              "Session Deleted Successfully",
+                              ),
+                              ),
+                              );
+                              },
+                              ),
+                              );
+                              }).toList(),
+                              );
+                              },
+                              );
+
+
                             },
-                          );
-                        },
                       );
                     },
                   ),
