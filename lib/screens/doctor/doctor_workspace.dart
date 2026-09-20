@@ -21,6 +21,7 @@ import '../../widgets/doctor/section_card.dart';
 import '../../utils/app_colors.dart';
 
 import '../doctor/doctor_dashboard.dart';
+import '../doctor/patient_workspace.dart';
 
 class DoctorWorkspace extends StatefulWidget {
   final QueueModel? initialQueue;
@@ -1352,19 +1353,19 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
     final controller = TextEditingController(
       text: session.sessionNote,
     );
-    final treatingDoctorController = TextEditingController(
-      text: session.treatingDoctor,
-    );
 
     final paymentAmountController = TextEditingController(
       text: session.paymentAmount,
     );
 
-    // Parse existing machine-friendly date.
-    // Example: 2026-07-08
+    //==========================================================
+    // Session Date
+    //==========================================================
 
     DateTime selectedSessionDate =
-        DateTime.tryParse(session.sessionDate) ??
+        DateTime.tryParse(
+          session.sessionDate,
+        ) ??
             DateTime.now();
 
     bool isEditingSession = false;
@@ -1382,12 +1383,13 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 borderRadius: BorderRadius.circular(18),
               ),
 
-              //=========================================
+              //==================================================
               // Title + Close Button
-              //=========================================
+              //==================================================
 
               title: Row(
                 children: [
+
                   const Icon(
                     Icons.sticky_note_2_outlined,
                   ),
@@ -1418,9 +1420,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 ],
               ),
 
-              //=========================================
+              //==================================================
               // Dialog Content
-              //=========================================
+              //==================================================
 
               content: SizedBox(
                 width: 520,
@@ -1432,9 +1434,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                   CrossAxisAlignment.start,
 
                   children: [
-                    //===================================
+
+                    //============================================
                     // Session Date
-                    //===================================
+                    //============================================
 
                     const Text(
                       "Session Date",
@@ -1487,20 +1490,24 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                             Icons.calendar_month_outlined,
                           ),
 
-                          suffixIcon: isEditingSession
+                          suffixIcon:
+                          isEditingSession
                               ? const Icon(
                             Icons
                                 .keyboard_arrow_down_rounded,
                           )
                               : null,
 
-                          filled: !isEditingSession,
+                          filled:
+                          !isEditingSession,
 
-                          fillColor: !isEditingSession
+                          fillColor:
+                          !isEditingSession
                               ? Colors.grey.shade100
                               : null,
 
-                          border: OutlineInputBorder(
+                          border:
+                          OutlineInputBorder(
                             borderRadius:
                             BorderRadius.circular(12),
                           ),
@@ -1513,7 +1520,8 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                           style: const TextStyle(
                             fontSize: 15,
-                            fontWeight: FontWeight.w500,
+                            fontWeight:
+                            FontWeight.w500,
                           ),
                         ),
                       ),
@@ -1521,31 +1529,39 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                     const SizedBox(height: 20),
 
-                    //===================================
+                    //============================================
                     // Session Note
-                    //===================================
+                    //============================================
 
                     TextFormField(
                       controller: controller,
 
-                      readOnly: !isEditingSession,
+                      readOnly:
+                      !isEditingSession,
 
-                      autofocus: isEditingSession,
+                      autofocus:
+                      isEditingSession,
 
                       maxLines: 8,
 
-                      decoration: InputDecoration(
-                        labelText: "Session Note",
+                      decoration:
+                      InputDecoration(
+                        labelText:
+                        "Session Note",
 
-                        alignLabelWithHint: true,
+                        alignLabelWithHint:
+                        true,
 
-                        filled: !isEditingSession,
+                        filled:
+                        !isEditingSession,
 
-                        fillColor: !isEditingSession
+                        fillColor:
+                        !isEditingSession
                             ? Colors.grey.shade100
                             : null,
 
-                        border: OutlineInputBorder(
+                        border:
+                        OutlineInputBorder(
                           borderRadius:
                           BorderRadius.circular(12),
                         ),
@@ -1554,58 +1570,64 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                     const SizedBox(height: 20),
 
-                    TextFormField(
-                      controller: treatingDoctorController,
-                      readOnly: !isEditingSession,
-                      decoration: InputDecoration(
-                        labelText: "Treating Doctor",
-                        filled: !isEditingSession,
-                        fillColor: !isEditingSession
-                            ? Colors.grey.shade100
-                            : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-
-
-                    const SizedBox(height: 20),
+                    //============================================
+                    // Payment Amount
+                    //============================================
 
                     TextFormField(
-                      controller: paymentAmountController,
-                      readOnly: !isEditingSession,
-                      keyboardType: TextInputType.number,
+                      controller:
+                      paymentAmountController,
+
+                      readOnly:
+                      !isEditingSession,
+
+                      keyboardType:
+                      TextInputType.number,
+
                       inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                        LengthLimitingTextInputFormatter(7),
+                        FilteringTextInputFormatter
+                            .digitsOnly,
+
+                        LengthLimitingTextInputFormatter(
+                          7,
+                        ),
                       ],
-                      decoration: InputDecoration(
-                        labelText: "Amount Paid",
-                        prefixIcon: const Icon(
+
+                      decoration:
+                      InputDecoration(
+                        labelText:
+                        "Amount Paid",
+
+                        prefixIcon:
+                        const Icon(
                           Icons.currency_rupee,
                         ),
-                        filled: !isEditingSession,
-                        fillColor: !isEditingSession
+
+                        filled:
+                        !isEditingSession,
+
+                        fillColor:
+                        !isEditingSession
                             ? Colors.grey.shade100
                             : null,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+
+                        border:
+                        OutlineInputBorder(
+                          borderRadius:
+                          BorderRadius.circular(12),
                         ),
                       ),
                     ),
-
-
-
                   ],
                 ),
               ),
 
-              //=========================================
+              //==================================================
               // Bottom Button
-              //=========================================
+              //==================================================
 
               actions: [
+
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -1623,8 +1645,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                     )
                         : Icon(
                       isEditingSession
-                          ? Icons.update_outlined
-                          : Icons.edit_outlined,
+                          ? Icons
+                          .update_outlined
+                          : Icons
+                          .edit_outlined,
                     ),
 
                     label: Text(
@@ -1638,65 +1662,82 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                     onPressed: isUpdating
                         ? null
                         : () async {
-                      //=============================
+
+                      //================================
                       // Enable Editing
-                      //=============================
+                      //================================
 
                       if (!isEditingSession) {
                         setDialogState(() {
-                          isEditingSession = true;
+                          isEditingSession =
+                          true;
                         });
 
                         return;
                       }
 
-                      //=============================
-                      // Validate Note
-                      //=============================
+                      //================================
+                      // Updated Values
+                      //================================
 
                       final updatedNote =
                       controller.text.trim();
 
-
-
-                      final updatedDoctor =
-                      treatingDoctorController.text.trim();
-
                       final updatedAmount =
-                      paymentAmountController.text.trim();
+                      paymentAmountController
+                          .text
+                          .trim();
 
+                      //================================
+                      // Payment Validation
+                      //================================
 
-
-                      if (updatedAmount.isNotEmpty) {
-                        final amount = int.tryParse(updatedAmount);
+                      if (updatedAmount
+                          .isNotEmpty) {
+                        final amount =
+                        int.tryParse(
+                          updatedAmount,
+                        );
 
                         if (amount == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(
                             const SnackBar(
-                              content: Text("Enter a valid amount."),
+                              content: Text(
+                                "Enter a valid amount.",
+                              ),
                             ),
                           );
+
                           return;
                         }
 
-                        if (updatedAmount.length > 7) {
-                          ScaffoldMessenger.of(context).showSnackBar(
+                        if (updatedAmount
+                            .length >
+                            7) {
+                          ScaffoldMessenger.of(
+                            context,
+                          ).showSnackBar(
                             const SnackBar(
                               content: Text(
                                 "Payment Amount cannot exceed 7 digits.",
                               ),
                             ),
                           );
+
                           return;
                         }
                       }
-                      //=============================
+
+                      //================================
                       // Calculate Updated Dates
-                      //=============================
+                      //================================
 
                       final updatedSessionDate =
-                      DateFormat('yyyy-MM-dd')
-                          .format(
+                      DateFormat(
+                        'yyyy-MM-dd',
+                      ).format(
                         selectedSessionDate,
                       );
 
@@ -1705,9 +1746,9 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                         selectedSessionDate,
                       );
 
-                      //=============================
-                      // Check Whether Anything Changed
-                      //=============================
+                      //================================
+                      // Check Changes
+                      //================================
 
                       final noteChanged =
                           updatedNote !=
@@ -1717,48 +1758,71 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                           updatedSessionDate !=
                               session.sessionDate;
 
-                      final doctorChanged =
-                          updatedDoctor != session.treatingDoctor;
-
                       final amountChanged =
-                          updatedAmount != session.paymentAmount;
+                          updatedAmount !=
+                              session.paymentAmount;
+
+                      // Treating Doctor is intentionally
+                      // not editable anymore.
+                      //
+                      // Preserve the existing value.
 
                       if (!noteChanged &&
                           !dateChanged &&
-                          !doctorChanged &&
-                          !amountChanged){
+                          !amountChanged) {
                         setDialogState(() {
-                          isEditingSession = false;
+                          isEditingSession =
+                          false;
                         });
 
                         return;
                       }
 
-                      //=============================
+                      //================================
                       // Start Loading
-                      //=============================
+                      //================================
 
                       setDialogState(() {
                         isUpdating = true;
                       });
 
-                      //=============================
-                      // Update Note + Date
-                      //=============================
+                      //================================
+                      // Update Session
+                      //================================
 
                       final success =
                       await updateSessionNoteAndDate(
                         session: session,
-                        updatedNote: updatedNote,
-                        updatedSessionDate: updatedSessionDate,
-                        updatedSaveDate: updatedSaveDate,
-                        updatedTreatingDoctor: updatedDoctor,
-                        updatedPaymentAmount: updatedAmount,
+
+                        updatedNote:
+                        updatedNote,
+
+                        updatedSessionDate:
+                        updatedSessionDate,
+
+                        updatedSaveDate:
+                        updatedSaveDate,
+
+                        // Preserve existing
+                        // treating doctor.
+                        updatedTreatingDoctor:
+                        session.treatingDoctor,
+
+                        updatedPaymentAmount:
+                        updatedAmount,
                       );
+
+                      //================================
+                      // Check Dialog
+                      //================================
 
                       if (!dialogContext.mounted) {
                         return;
                       }
+
+                      //================================
+                      // Success
+                      //================================
 
                       if (success) {
                         Navigator.pop(
@@ -1767,6 +1831,10 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                         return;
                       }
+
+                      //================================
+                      // Stop Loading
+                      //================================
 
                       setDialogState(() {
                         isUpdating = false;
@@ -1781,10 +1849,12 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
       },
     );
 
-    controller.dispose();
-    treatingDoctorController.dispose();
-    paymentAmountController.dispose();
+    //==========================================================
+    // Dispose Controllers
+    //==========================================================
 
+    controller.dispose();
+    paymentAmountController.dispose();
   }
   Future<void> updateSession() async {
     try {
@@ -2253,32 +2323,6 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                             hintText:
                             "Enter session note...",
                             alignLabelWithHint: true,
-                            border: OutlineInputBorder(
-                              borderRadius:
-                              BorderRadius.circular(12),
-                            ),
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        //===================================
-                        // Treating Doctor
-                        //===================================
-
-                        TextFormField(
-                          controller:
-                          treatingDoctorController,
-
-                          decoration: InputDecoration(
-                            labelText: "Treating Doctor",
-                            hintText:
-                            "Enter doctor's name",
-
-                            prefixIcon: const Icon(
-                              Icons.medical_services_outlined,
-                            ),
-
                             border: OutlineInputBorder(
                               borderRadius:
                               BorderRadius.circular(12),
@@ -2879,85 +2923,144 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
           Expanded(
             child: FutureBuilder<List<QueueModel>>(
-
               future: queueFuture,
-
               builder: (context, snapshot) {
 
-                if (snapshot.connectionState ==
-                    ConnectionState.waiting) {
+                //==========================================================
+                // Loading
+                //==========================================================
 
+                if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
-
                 }
 
-                if (snapshot.hasError) {
+                //==========================================================
+                // Error
+                //==========================================================
 
+                if (snapshot.hasError) {
                   return Center(
                     child: Text(
                       snapshot.error.toString(),
                     ),
                   );
-
                 }
+
+                //==========================================================
+                // Queue Data
+                //==========================================================
 
                 final queue = snapshot.data ?? [];
 
-                if (queue.isEmpty) {
+                //==========================================================
+                // Empty Queue
+                //==========================================================
 
+                if (queue.isEmpty) {
                   return const Center(
                     child: Text(
                       "No Patients In Queue",
                     ),
                   );
-
                 }
 
+                //==========================================================
+                // Queue List
+                //==========================================================
+
                 return RefreshIndicator(
-
                   onRefresh: refreshQueue,
-
                   child: ListView.builder(
-
                     padding: const EdgeInsets.only(
                       bottom: 20,
                     ),
-
                     itemCount: queue.length,
 
                     itemBuilder: (context, index) {
 
                       final patient = queue[index];
 
+                      //====================================================
+                      // Selected Patient
+                      //====================================================
+
                       final isSelected =
                           selectedQueue?.id == patient.id;
 
-                      return Card(
+                      //====================================================
+                      // Completed Status
+                      //====================================================
 
+                      final isCompleted =
+                          patient.status == "Completed";
+
+                      return Card(
                         elevation: isSelected ? 5 : 1,
 
                         color: isSelected
                             ? Colors.blue.shade50
                             : Colors.white,
 
-                        margin:
-                        const EdgeInsets.symmetric(
+                        margin: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 6,
                         ),
 
                         child: ListTile(
+
+                          //================================================
+                          // Padding
+                          //================================================
+
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
                             vertical: 8,
                           ),
 
+                          //================================================
+                          // Patient Click
+                          //================================================
+
                           onTap: () async {
-                            if (patient.status == "Completed") {
+                            debugPrint(
+                              "QUEUE CLICKED: ${patient.patientName} | "
+                                  "Status: ${patient.status} | "
+                                  "Patient ID: ${patient.patientId}",
+                            );
+
+                            //============================================================
+                            // COMPLETED PATIENT
+                            //============================================================
+
+                            if (patient.status.trim().toLowerCase() == "completed") {
+                              debugPrint(
+                                "OPENING PATIENT WORKSPACE: ${patient.patientId}",
+                              );
+
+                              if (!context.mounted) return;
+
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) {
+                                    return PatientWorkspace(
+                                      patientId: patient.patientId,
+                                    );
+                                  },
+                                ),
+                              );
+
                               return;
                             }
+
+                            //============================================================
+                            // WAITING PATIENT
+                            //============================================================
+
+                            debugPrint(
+                              "LOADING WAITING PATIENT: ${patient.patientId}",
+                            );
 
                             setState(() {
                               selectedQueue = patient;
@@ -2968,29 +3071,52 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                             );
                           },
 
+                          //================================================
+                          // Queue Number
+                          //================================================
+
                           leading: CircleAvatar(
                             radius: 22,
+
                             backgroundColor: isSelected
                                 ? Theme.of(context).primaryColor
+                                : isCompleted
+                                ? Colors.green.shade100
                                 : Colors.grey.shade200,
+
                             child: Text(
                               "${index + 1}",
+
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
+
                                 color: isSelected
                                     ? Colors.white
+                                    : isCompleted
+                                    ? Colors.green.shade800
                                     : Colors.black87,
                               ),
                             ),
                           ),
 
+                          //================================================
+                          // Patient Name + Status
+                          //================================================
+
                           title: Row(
                             children: [
+
+                              //============================================
+                              // Patient Name
+                              //============================================
+
                               Expanded(
                                 child: Text(
                                   patient.patientName,
+
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
+
                                   style: const TextStyle(
                                     fontSize: 16,
                                     fontWeight: FontWeight.w600,
@@ -3000,42 +3126,63 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                               const SizedBox(width: 8),
 
+                              //============================================
+                              // Status
+                              //============================================
+
                               Container(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 10,
                                   vertical: 4,
                                 ),
+
                                 decoration: BoxDecoration(
-                                  color: patient.status == "Waiting"
-                                      ? Colors.orange.shade100
-                                      : Colors.green.shade100,
-                                  borderRadius: BorderRadius.circular(4),
+                                  color: isCompleted
+                                      ? Colors.green.shade100
+                                      : Colors.orange.shade100,
+
+                                  borderRadius:
+                                  BorderRadius.circular(4),
                                 ),
+
                                 child: Text(
                                   patient.status,
+
                                   style: TextStyle(
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
-                                    color: patient.status == "Waiting"
-                                        ? Colors.orange.shade800
-                                        : Colors.green.shade800,
+
+                                    color: isCompleted
+                                        ? Colors.green.shade800
+                                        : Colors.orange.shade800,
                                   ),
                                 ),
                               ),
                             ],
                           ),
 
+                          //================================================
+                          // Patient Details
+                          //================================================
+
                           subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 6),
+                            padding: const EdgeInsets.only(
+                              top: 6,
+                            ),
+
                             child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.start,
+
                               children: [
-                                //------------------------------------------------
+
+                                //==========================================
                                 // Arrival Time
-                                //------------------------------------------------
+                                //==========================================
 
                                 Row(
                                   children: [
+
                                     Icon(
                                       Icons.schedule_rounded,
                                       size: 14,
@@ -3046,6 +3193,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                                     Text(
                                       "Arrived: ${patient.arrivalTime}",
+
                                       style: TextStyle(
                                         color: Colors.grey.shade600,
                                         fontSize: 12,
@@ -3056,28 +3204,59 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
 
                                 const SizedBox(height: 5),
 
-                                //------------------------------------------------
-                                // Assigned Doctor
-                                //------------------------------------------------
+                                //==========================================
+                                // Completed Patient Hint
+                                //==========================================
 
+                                if (isCompleted)
+                                  Row(
+                                    children: [
 
+                                      Icon(
+                                        Icons.folder_open_outlined,
+                                        size: 14,
+                                        color: Colors.green.shade700,
+                                      ),
+
+                                      const SizedBox(width: 5),
+
+                                      Text(
+                                        "Tap to view patient workspace",
+
+                                        style: TextStyle(
+                                          color: Colors.green.shade700,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                               ],
                             ),
                           ),
-                        )
 
+                          //================================================
+                          // Trailing Arrow
+                          //================================================
+
+                          trailing: Icon(
+                            isCompleted
+                                ? Icons.arrow_forward_ios_rounded
+                                : Icons.chevron_right_rounded,
+
+                            size: isCompleted ? 16 : 24,
+
+                            color: isCompleted
+                                ? Colors.green.shade700
+                                : Colors.grey.shade500,
+                          ),
+                        ),
                       );
-
                     },
-
                   ),
-
                 );
-
               },
-
             ),
-
           ),
 
         ],
@@ -3893,214 +4072,347 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
                 //=========================================
 
                 else
-
                   Builder(
                     builder: (context) {
 
-                      //=====================================
+                      //==========================================================
                       // Create Copy Of Sessions
                       //
-                      // Do not directly sort the original
-                      // sessions list inside build().
-                      //=====================================
+                      // Do not directly sort the original sessions list
+                      // inside build().
+                      //==========================================================
 
                       final sortedSessions =
                       List<SessionModel>.from(
                         sessions.cast<SessionModel>(),
                       );
 
-                      //=====================================
+                      //==========================================================
                       // Sort Sessions
                       //
-                      // Session number:
-                      // 1 → 2 → 3 → 4
-                      //=====================================
+                      // Latest session first.
+                      //
+                      // Primary sorting:
+                      //     sessionDate DESC
+                      //
+                      // Secondary sorting:
+                      //     sessionNumber DESC
+                      //
+                      // Example:
+                      //
+                      // Session 1 -> 15 Sept
+                      // Session 2 -> 17 Sept
+                      // Session 3 -> 18 Sept
+                      // Session 4 -> 20 Sept
+                      //
+                      // Display:
+                      //
+                      // Session 4 -> 20 Sept
+                      // Session 3 -> 18 Sept
+                      // Session 2 -> 17 Sept
+                      // Session 1 -> 15 Sept
+                      //==========================================================
 
                       sortedSessions.sort(
-                            (a, b) =>
-                            a.sessionNumber.compareTo(
-                              b.sessionNumber,
-                            ),
+                            (a, b) {
+
+                          final dateA =
+                          DateTime.tryParse(
+                            a.sessionDate,
+                          );
+
+                          final dateB =
+                          DateTime.tryParse(
+                            b.sessionDate,
+                          );
+
+                          //======================================================
+                          // Both dates are valid
+                          //======================================================
+
+                          if (dateA != null && dateB != null) {
+
+                            final dateComparison =
+                            dateB.compareTo(dateA);
+
+                            // Different dates
+                            if (dateComparison != 0) {
+                              return dateComparison;
+                            }
+                          }
+
+                          //======================================================
+                          // If dates are same
+                          //
+                          // Use session number as secondary sorting.
+                          //======================================================
+
+                          return b.sessionNumber.compareTo(
+                            a.sessionNumber,
+                          );
+                        },
                       );
 
-                      //=====================================
-                      // Display Sorted Sessions
-                      //=====================================
+                      //==========================================================
+                      // Responsive Layout
+                      //==========================================================
 
                       return LayoutBuilder(
-                        builder:
-                            (context, constraints) {
+                        builder: (context, constraints) {
 
                           int crossAxisCount;
 
                           if (constraints.maxWidth < 600) {
+
                             // Mobile
                             crossAxisCount = 1;
+
                           } else {
+
                             // Tablet / Desktop
                             crossAxisCount = 4;
                           }
 
-                              return LayoutBuilder(
-                              builder: (context, constraints) {
-                              final spacing = 12.0;
+                          //======================================================
+                          // Card Spacing
+                          //======================================================
 
-                              final cardWidth = crossAxisCount == 1
+                          const spacing = 12.0;
+
+                          //======================================================
+                          // Calculate Card Width
+                          //======================================================
+
+                          final cardWidth =
+                          crossAxisCount == 1
                               ? constraints.maxWidth
-                                  : (constraints.maxWidth -
-                              (spacing * (crossAxisCount - 1))) /
+                              : (constraints.maxWidth -
+                              (spacing *
+                                  (crossAxisCount - 1))) /
                               crossAxisCount;
 
-                              return Wrap(
-                              spacing: spacing,
-                              runSpacing: spacing,
-                              children: sortedSessions.map((session) {
-                              return SizedBox(
-                              width: cardWidth,
-                              child: PreviousSessionCard(
-                              session: session,
+                          //======================================================
+                          // Session Cards
+                          //======================================================
 
-                              //================================
-                              // Open Session
-                              //================================
+                          return Wrap(
+                            spacing: spacing,
+                            runSpacing: spacing,
 
-                              onTap: () {
-                              showSessionNoteDialog(
-                              session,
-                              );
+                            children: sortedSessions.map(
+                                  (session) {
+
+                                return SizedBox(
+                                  width: cardWidth,
+
+                                  child: PreviousSessionCard(
+                                    session: session,
+
+                                    //================================================
+                                    // Open Session
+                                    //================================================
+
+                                    onTap: () {
+
+                                      showSessionNoteDialog(
+                                        session,
+                                      );
+                                    },
+
+                                    //================================================
+                                    // Edit Session
+                                    //================================================
+
+                                    onEdit: () {
+
+                                      loadSession(
+                                        session,
+                                      );
+                                    },
+
+                                    //================================================
+                                    // View Session
+                                    //================================================
+
+                                    onView: () {
+
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              SessionDetailsScreen(
+                                                session: session,
+                                              ),
+                                        ),
+                                      );
+                                    },
+
+                                    //================================================
+                                    // Generate PDF
+                                    //================================================
+
+                                    onPdf: () async {
+
+                                      await PdfService
+                                          .instance
+                                          .generateSessionPdf(
+                                        session,
+                                      );
+                                    },
+
+                                    //================================================
+                                    // Delete Session
+                                    //================================================
+
+                                    onDelete: () async {
+
+                                      //==============================================
+                                      // Confirm Delete
+                                      //==============================================
+
+                                      final confirm =
+                                      await showDialog<bool>(
+                                        context: context,
+
+                                        builder: (_) =>
+                                            AlertDialog(
+                                              title: const Text(
+                                                "Delete Session",
+                                              ),
+
+                                              content: const Text(
+                                                "Are you sure you want to delete this session?",
+                                              ),
+
+                                              actions: [
+
+                                                //========================================
+                                                // Cancel
+                                                //========================================
+
+                                                TextButton(
+                                                  onPressed: () {
+
+                                                    Navigator.pop(
+                                                      context,
+                                                      false,
+                                                    );
+                                                  },
+
+                                                  child: const Text(
+                                                    "Cancel",
+                                                  ),
+                                                ),
+
+                                                //========================================
+                                                // Delete
+                                                //========================================
+
+                                                FilledButton(
+                                                  onPressed: () {
+
+                                                    Navigator.pop(
+                                                      context,
+                                                      true,
+                                                    );
+                                                  },
+
+                                                  child: const Text(
+                                                    "Delete",
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                      );
+
+                                      //==============================================
+                                      // User Cancelled
+                                      //==============================================
+
+                                      if (confirm != true) {
+                                        return;
+                                      }
+
+                                      //==============================================
+                                      // Delete Session From Database
+                                      //==============================================
+
+                                      await sessionRepository
+                                          .deleteSession(
+                                        session.id!,
+                                      );
+
+                                      //==============================================
+                                      // Reorder Session Numbers
+                                      //
+                                      // Example:
+                                      //
+                                      // Before:
+                                      // 1
+                                      // 2
+                                      // 3
+                                      // 4
+                                      //
+                                      // Delete 3
+                                      //
+                                      // After reorder:
+                                      // 1
+                                      // 2
+                                      // 3
+                                      //==============================================
+
+                                      await sessionRepository
+                                          .reorderPatientSessions(
+                                        selectedPatient!.id!,
+                                      );
+
+                                      //==============================================
+                                      // Get Updated Sessions
+                                      //==============================================
+
+                                      final updatedSessions =
+                                      await sessionRepository
+                                          .getPatientSessions(
+                                        selectedPatient!.id!,
+                                      );
+
+                                      //==============================================
+                                      // Widget Still Mounted?
+                                      //==============================================
+
+                                      if (!mounted) {
+                                        return;
+                                      }
+
+                                      //==============================================
+                                      // Update Local Session List
+                                      //==============================================
+
+                                      setState(() {
+
+                                        sessions = updatedSessions;
+
+                                      });
+
+                                      //==============================================
+                                      // Success Message
+                                      //==============================================
+
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                            "Session Deleted Successfully",
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  ),
+                                );
                               },
-
-                              //================================
-                              // Edit Session
-                              //================================
-
-                              onEdit: () {
-                              loadSession(
-                              session,
-                              );
-                              },
-
-                              //================================
-                              // View Session
-                              //================================
-
-                              onView: () {
-                              Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                              builder: (_) => SessionDetailsScreen(
-                              session: session,
-                              ),
-                              ),
-                              );
-                              },
-
-                              //================================
-                              // Generate PDF
-                              //================================
-
-                              onPdf: () async {
-                              await PdfService.instance.generateSessionPdf(
-                              session,
-                              );
-                              },
-
-                              //================================
-                              // Delete Session
-                              //================================
-
-                              onDelete: () async {
-                              final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (_) => AlertDialog(
-                              title: const Text(
-                              "Delete Session",
-                              ),
-                              content: const Text(
-                              "Are you sure you want to delete this session?",
-                              ),
-                              actions: [
-                              TextButton(
-                              onPressed: () {
-                              Navigator.pop(
-                              context,
-                              false,
-                              );
-                              },
-                              child: const Text(
-                              "Cancel",
-                              ),
-                              ),
-                              FilledButton(
-                              onPressed: () {
-                              Navigator.pop(
-                              context,
-                              true,
-                              );
-                              },
-                              child: const Text(
-                              "Delete",
-                              ),
-                              ),
-                              ],
-                              ),
-                              );
-
-                              if (confirm != true) {
-                              return;
-                              }
-
-                              //================================
-                              // Delete
-                              //================================
-
-                              await sessionRepository.deleteSession(
-                              session.id!,
-                              );
-
-                              //================================
-                              // Reorder Sessions
-                              //================================
-
-                              await sessionRepository.reorderPatientSessions(
-                              selectedPatient!.id!,
-                              );
-
-                              //================================
-                              // Reload Sessions
-                              //================================
-
-                              sessions = await sessionRepository.getPatientSessions(
-                              selectedPatient!.id!,
-                              );
-
-                              if (!mounted) {
-                              return;
-                              }
-
-                              setState(() {});
-
-                              //================================
-                              // Success Message
-                              //================================
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                              content: Text(
-                              "Session Deleted Successfully",
-                              ),
-                              ),
-                              );
-                              },
-                              ),
-                              );
-                              }).toList(),
-                              );
-                              },
-                              );
-
-
-                            },
+                            ).toList(),
+                          );
+                        },
                       );
                     },
                   ),

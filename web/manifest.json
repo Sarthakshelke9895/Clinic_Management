@@ -1,6 +1,6 @@
 {
-    "name": "clinic_managemnet",
-    "short_name": "clinic_managemnet",
+    "name": "clinic_management",
+    "short_name": "clinic_management",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
