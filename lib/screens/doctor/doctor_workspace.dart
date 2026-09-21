@@ -3556,7 +3556,7 @@ class _DoctorWorkspaceState extends State<DoctorWorkspace> {
             id: "history",
             title: "History",
             icon: Icons.history_edu_outlined,
-            initiallyExpanded: true,
+            initiallyExpanded: true ,
 
             expandedSectionId: expandedSectionId,
 

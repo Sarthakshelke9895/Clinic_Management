@@ -21,9 +21,8 @@ class PreviousSessionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final date = session.saveDate.isEmpty
-        ? session.sessionDate
-        : session.saveDate;
+    final date =
+    session.saveDate.isEmpty ? session.sessionDate : session.saveDate;
 
     final note = session.sessionNote.trim();
     final hasNote = note.isNotEmpty;
@@ -45,28 +44,23 @@ class PreviousSessionCard extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(15),
           child: Column(
-            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
-              //========================================
+              // ============================================================
               // SESSION HEADER
-              //========================================
+              // ============================================================
 
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-
-                  //======================================
-                  // Session Information
-                  //======================================
+                  // ========================================================
+                  // SESSION INFORMATION
+                  // ========================================================
 
                   Expanded(
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-
                         Text(
                           "Session ${session.sessionNumber}",
                           maxLines: 1,
@@ -80,13 +74,12 @@ class PreviousSessionCard extends StatelessWidget {
 
                         const SizedBox(height: 5),
 
-                        //================================
-                        // Session Date
-                        //================================
+                        // ==================================================
+                        // SESSION DATE
+                        // ==================================================
 
                         Row(
                           children: [
-
                             Icon(
                               Icons.calendar_today_outlined,
                               size: 13,
@@ -112,10 +105,18 @@ class PreviousSessionCard extends StatelessWidget {
                     ),
                   ),
 
-                  //======================================
-                  // MORE MENU
-                  //======================================
+                  // ========================================================
+                  // THREE-DOT MENU
+                  // ========================================================
+                  //
+                  // HIDDEN FOR NOW.
+                  //
+                  // Original functionality is preserved in comments
+                  // and can be enabled later if required.
+                  //
+                  // ========================================================
 
+                  /*
                   PopupMenuButton<String>(
                     padding: EdgeInsets.zero,
 
@@ -131,9 +132,7 @@ class PreviousSessionCard extends StatelessWidget {
                     ),
 
                     onSelected: (value) {
-
                       switch (value) {
-
                         case "edit":
                           onEdit();
                           break;
@@ -153,23 +152,15 @@ class PreviousSessionCard extends StatelessWidget {
                     },
 
                     itemBuilder: (_) => const [
-
-                      //================================
-                      // Edit
-                      //================================
-
                       PopupMenuItem(
                         value: "edit",
                         child: Row(
                           children: [
-
                             Icon(
                               Icons.edit_outlined,
                               size: 19,
                             ),
-
                             SizedBox(width: 9),
-
                             Text(
                               "Edit Session",
                             ),
@@ -177,22 +168,15 @@ class PreviousSessionCard extends StatelessWidget {
                         ),
                       ),
 
-                      //================================
-                      // View
-                      //================================
-
                       PopupMenuItem(
                         value: "view",
                         child: Row(
                           children: [
-
                             Icon(
                               Icons.visibility_outlined,
                               size: 19,
                             ),
-
                             SizedBox(width: 9),
-
                             Text(
                               "View",
                             ),
@@ -200,22 +184,15 @@ class PreviousSessionCard extends StatelessWidget {
                         ),
                       ),
 
-                      //================================
-                      // PDF
-                      //================================
-
                       PopupMenuItem(
                         value: "pdf",
                         child: Row(
                           children: [
-
                             Icon(
                               Icons.picture_as_pdf_outlined,
                               size: 19,
                             ),
-
                             SizedBox(width: 9),
-
                             Text(
                               "Generate PDF",
                             ),
@@ -223,22 +200,15 @@ class PreviousSessionCard extends StatelessWidget {
                         ),
                       ),
 
-                      //================================
-                      // Delete
-                      //================================
-
                       PopupMenuItem(
                         value: "delete",
                         child: Row(
                           children: [
-
                             Icon(
                               Icons.delete_outline,
                               size: 19,
                             ),
-
                             SizedBox(width: 9),
-
                             Text(
                               "Delete",
                             ),
@@ -247,106 +217,115 @@ class PreviousSessionCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  */
                 ],
               ),
 
-              //========================================
+              // ============================================================
               // SESSION NOTE
-              //========================================
-
-              if (hasNote) ...[
-
-                const SizedBox(height: 15),
-
-                Container(
-                  width: double.infinity,
-                  height: 68,
-                  padding: const EdgeInsets.all(10),
-
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade50,
-                    borderRadius: BorderRadius.circular(9),
-                    border: Border.all(
-                      color: Colors.grey.shade200,
-                    ),
-                  ),
-
-                  child: Column(
-                    crossAxisAlignment:
-                    CrossAxisAlignment.start,
-                    children: [
-
-                      //================================
-                      // Note Header
-                      //================================
-
-                      Row(
-                        children: [
-
-                          Icon(
-                            Icons.notes_outlined,
-                            size: 15,
-                            color: Colors.blue.shade600,
-                          ),
-
-                          const SizedBox(width: 6),
-
-                          Text(
-                            "Session Note",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w700,
-                              color: Colors.blue.shade700,
-                            ),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 10),
-
-                      //================================
-                      // Note Text
-                      //================================
-
-                      Expanded(
-                        child: Text(
-                          note,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          softWrap: true,
-                          style: TextStyle(
-                            fontSize: 12,
-                            height: 1.35,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              // ============================================================
 
               const SizedBox(height: 15),
 
-              //========================================
+              // ============================================================
+              // FIXED SESSION NOTE AREA
+              // ============================================================
+              //
+              // Every card gets exactly the same note-area height.
+              //
+              // 1 line note  -> empty space remains
+              // 4 line note  -> 4 lines displayed
+              // 5+ lines    -> truncated with ...
+              //
+              // ============================================================
+
+              Container(
+                width: double.infinity,
+                height: 120,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade50,
+                  borderRadius: BorderRadius.circular(9),
+                  border: Border.all(
+                    color: Colors.grey.shade200,
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ========================================================
+                    // NOTE HEADER
+                    // ========================================================
+
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.notes_outlined,
+                          size: 15,
+                          color: Colors.blue.shade600,
+                        ),
+
+                        const SizedBox(width: 6),
+
+                        Text(
+                          "Session Note",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.blue.shade700,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // ========================================================
+                    // NOTE TEXT
+                    // ========================================================
+
+                    Expanded(
+                      child: hasNote
+                          ? Text(
+                        note,
+                        maxLines: 5,
+                        overflow: TextOverflow.ellipsis,
+                        softWrap: true,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.35,
+                          color: Colors.grey.shade700,
+                        ),
+                      )
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ============================================================
+              // SPACE BEFORE DIVIDER
+              // ============================================================
+
+              const SizedBox(height: 15),
+
+              // ============================================================
               // DIVIDER
-              //========================================
+              // ============================================================
 
               Divider(
                 height: 1,
                 color: Colors.grey.shade200,
               ),
 
-              const SizedBox(height: 15),
 
-              //========================================
+              // ============================================================
               // VIEW SESSION BUTTON
-              //========================================
+              // ============================================================
 
               SizedBox(
                 width: double.infinity,
-                height: 36,
-
+                height: 40,
                 child: OutlinedButton(
                   onPressed: onView,
 
@@ -365,11 +344,8 @@ class PreviousSessionCard extends StatelessWidget {
                   ),
 
                   child: Row(
-                    mainAxisAlignment:
-                    MainAxisAlignment.center,
-
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-
                       Text(
                         "View Session",
                         style: TextStyle(

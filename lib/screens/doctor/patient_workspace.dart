@@ -5,8 +5,10 @@ import '../../models/doctor/session_model.dart';
 
 import '../../repositories/patient_repository.dart';
 import '../../repositories/doctor/session_repository.dart';
+
 import '../../services/pdf/pdf_service.dart';
 import '../../utils/app_colors.dart';
+
 import 'package:intl/intl.dart';
 
 import '../../services/auth/auth_service.dart';
@@ -14,7 +16,6 @@ import '../../services/auth/auth_service.dart';
 import '../doctor/session_details_screen.dart';
 
 class PatientWorkspace extends StatefulWidget {
-
   final String patientId;
 
   const PatientWorkspace({
@@ -23,739 +24,1053 @@ class PatientWorkspace extends StatefulWidget {
   });
 
   @override
-  State<PatientWorkspace> createState() =>
-      _PatientWorkspaceState();
+  State<PatientWorkspace> createState() => _PatientWorkspaceState();
 }
 
-class _PatientWorkspaceState
-    extends State<PatientWorkspace> {
-
-//==========================================================
-// Repositories
-//==========================================================
-
-final PatientRepository patientRepository =
-PatientRepository();
-
-final SessionRepository sessionRepository =
-SessionRepository();
-
-//==========================================================
-// Variables
-//==========================================================
-
-Patient? patient;
-
-List<SessionModel> sessions = [];
-
-bool isLoading = true;
-
-//==========================================================
-// Init
-//==========================================================
-
-@override
-void initState() {
-
-super.initState();
-
-loadData();
-
-}
-
-//==========================================================
-// Load Patient + Sessions
-//==========================================================
-
-Future<void> loadData() async {
-
-setState(() {
-
-isLoading = true;
-
-});
-
-final loadedPatient =
-await patientRepository.getPatientById(
-widget.patientId,
-);
-
-final loadedSessions =
-await sessionRepository.getPatientSessions(
-widget.patientId,
-);
-
-setState(() {
-
-patient = loadedPatient;
-
-sessions = loadedSessions;
-
-isLoading = false;
-
-});
-
-}
-
-//==========================================================
-// Refresh
-//==========================================================
-
-Future<void> refresh() async {
-
-await loadData();
-
-}
-
-//==========================================================
-// Delete Session
-//==========================================================
-
-Future<void> deleteSession(
-SessionModel session,
-) async {
-
-final confirm =
-await showDialog<bool>(
-
-context: context,
-
-builder: (context) {
-
-return AlertDialog(
-
-title: const Text(
-"Delete Session",
-),
-
-content: const Text(
-"Are you sure you want to delete this session?",
-),
-
-actions: [
-
-TextButton(
-
-onPressed: () {
-
-Navigator.pop(
-context,
-false,
-);
-
-},
-
-child: const Text("Cancel"),
-
-),
-
-FilledButton(
-
-onPressed: () {
-
-Navigator.pop(
-context,
-true,
-);
-
-},
-
-child: const Text("Delete"),
-
-),
-
-],
-
-);
-
-},
-
-);
-
-if (confirm != true) return;
-
-await sessionRepository.deleteSession(
-session.id!,
-);
-
-await loadData();
-
-if (!mounted) return;
-
-ScaffoldMessenger.of(context).showSnackBar(
-
-const SnackBar(
-
-content: Text(
-"Session Deleted Successfully",
-),
-
-),
-
-);
-
-}
-
-//==========================================================
-// View Session
-//==========================================================
-
-void viewSession(
-SessionModel session,
-) {
-
-// Part 3
-
-}
-
-//==========================================================
-// Download PDF
-//==========================================================
-
-Future<void> generatePdf(
-SessionModel session,
-) async {
-
-// Part 3
-
-}
-
-//==========================================================
-// UI
-//==========================================================
-
-@override
-Widget build(BuildContext context) {
-
-return Scaffold(
-
-  appBar: AppBar(
-    elevation: 0,
-    backgroundColor: AppColors.primary,
-    foregroundColor: Colors.white,
-    titleSpacing: 8,
-    title: const Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          "Patient Record",
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+class _PatientWorkspaceState extends State<PatientWorkspace> {
+  // ==========================================================
+  // Repositories
+  // ==========================================================
+
+  final PatientRepository patientRepository =
+  PatientRepository();
+
+  final SessionRepository sessionRepository =
+  SessionRepository();
+
+  // ==========================================================
+  // Variables
+  // ==========================================================
+
+  Patient? patient;
+
+  List<SessionModel> sessions = [];
+
+  bool isLoading = true;
+
+  // ==========================================================
+  // Init
+  // ==========================================================
+
+  @override
+  void initState() {
+    super.initState();
+
+    loadData();
+  }
+
+  // ==========================================================
+  // Load Patient + Sessions
+  // ==========================================================
+
+  Future<void> loadData() async {
+    setState(() {
+      isLoading = true;
+    });
+
+    try {
+      final loadedPatient =
+      await patientRepository.getPatientById(
+        widget.patientId,
+      );
+
+      final loadedSessions =
+      await sessionRepository.getPatientSessions(
+        widget.patientId,
+      );
+
+      // ========================================================
+      // SORT SESSIONS
+      // ========================================================
+      //
+      // Latest session comes first.
+      //
+      // We compare the COMPLETE date + time so that:
+      //
+      // 21 Sep 2026 05:30 PM
+      // 21 Sep 2026 06:45 PM
+      //
+      // are correctly ordered even though both are on
+      // the same date.
+      //
+      // ========================================================
+
+      loadedSessions.sort((a, b) {
+        final DateTime dateA = getSessionDateTime(a);
+        final DateTime dateB = getSessionDateTime(b);
+
+        return dateB.compareTo(dateA);
+      });
+
+      if (!mounted) return;
+
+      setState(() {
+        patient = loadedPatient;
+
+        sessions = loadedSessions;
+
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("PATIENT WORKSPACE LOAD ERROR: $e");
+
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Failed to load patient sessions",
           ),
         ),
-        SizedBox(height: 2),
-        Text(
-          "Medical History",
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.white70,
+      );
+    }
+  }
+
+  // ==========================================================
+  // Refresh
+  // ==========================================================
+
+  Future<void> refresh() async {
+    await loadData();
+  }
+
+  // ==========================================================
+  // Get Session Date + Time
+  // ==========================================================
+  //
+  // This method safely converts the stored session date into
+  // a DateTime.
+  //
+  // sessionDate is used as the primary session completion
+  // timestamp.
+  //
+  // If it cannot be parsed, saveDate is used as fallback.
+  //
+  // ==========================================================
+
+  DateTime getSessionDateTime(SessionModel session) {
+    try {
+      if (session.sessionDate.trim().isNotEmpty) {
+        return DateTime.parse(
+          session.sessionDate.trim(),
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        "SESSION DATE PARSE ERROR: ${session.sessionDate}",
+      );
+    }
+
+    try {
+      if (session.saveDate.trim().isNotEmpty) {
+        return DateTime.parse(
+          session.saveDate.trim(),
+        );
+      }
+    } catch (e) {
+      debugPrint(
+        "SESSION SAVE DATE PARSE ERROR: ${session.saveDate}",
+      );
+    }
+
+    // If neither date can be parsed, put the session at
+    // the bottom of the sorted list.
+    return DateTime.fromMillisecondsSinceEpoch(0);
+  }
+
+  // ==========================================================
+  // Display Session Number
+  // ==========================================================
+  //
+  // Sessions are sorted newest -> oldest.
+  //
+  // Example:
+  //
+  // Sorted list:
+  //
+  // index 0 -> latest
+  // index 1 -> previous
+  // index 2 -> oldest
+  //
+  // Display:
+  //
+  // index 0 -> Session 3
+  // index 1 -> Session 2
+  // index 2 -> Session 1
+  //
+  // If Session 2 is deleted:
+  //
+  // index 0 -> Session 2
+  // index 1 -> Session 1
+  //
+  // This means there are NEVER gaps in the displayed numbering.
+  //
+  // ==========================================================
+
+  int getDisplaySessionNumber(int index) {
+    return sessions.length - index;
+  }
+
+  // ==========================================================
+  // Format Session Date + Time
+  // ==========================================================
+  //
+  // Example:
+  //
+  // 21st September 2026
+  // 05:42 PM
+  //
+  // Display:
+  //
+  // 21st September 2026 • 05:42 PM
+  //
+  // ==========================================================
+
+  String formatSessionDateTime(String date) {
+    try {
+      final DateTime parsedDate =
+      DateTime.parse(date).toLocal();
+
+      final int day = parsedDate.day;
+
+      String suffix = "th";
+
+      if (day != 11 && day != 12 && day != 13) {
+        switch (day % 10) {
+          case 1:
+            suffix = "st";
+            break;
+
+          case 2:
+            suffix = "nd";
+            break;
+
+          case 3:
+            suffix = "rd";
+            break;
+        }
+      }
+
+      final String formattedDate =
+          "$day$suffix ${DateFormat('MMMM yyyy').format(parsedDate)}";
+
+      final String formattedTime =
+      DateFormat('hh:mm a').format(parsedDate);
+
+      return "$formattedDate • $formattedTime";
+    } catch (e) {
+      debugPrint(
+        "DATE FORMAT ERROR: $date",
+      );
+
+      return date;
+    }
+  }
+
+  // ==========================================================
+  // Delete Session
+  // ==========================================================
+
+  Future<void> deleteSession(
+      SessionModel session,
+      ) async {
+    final confirm =
+    await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text(
+            "Delete Session",
+          ),
+          content: const Text(
+            "Are you sure you want to delete this session?",
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  false,
+                );
+              },
+              child: const Text(
+                "Cancel",
+              ),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  true,
+                );
+              },
+              child: const Text(
+                "Delete",
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm != true) return;
+
+    if (session.id == null ||
+        session.id!.isEmpty) {
+      return;
+    }
+
+    try {
+      await sessionRepository.deleteSession(
+        session.id!,
+      );
+
+      // ========================================================
+      // IMPORTANT
+      // ========================================================
+      //
+      // Reloading the sessions here automatically:
+      //
+      // 1. Gets the remaining sessions
+      // 2. Sorts them by date + time
+      // 3. Recalculates their display numbers
+      //
+      // So:
+      //
+      // 1, 2, 3
+      //
+      // Delete 2
+      //
+      // becomes:
+      //
+      // 1, 2
+      //
+      // ========================================================
+
+      await loadData();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Session Deleted Successfully",
           ),
         ),
-      ],
-    ),
-  ),
+      );
+    } catch (e) {
+      debugPrint(
+        "SESSION DELETE ERROR: $e",
+      );
 
-body: isLoading
+      if (!mounted) return;
 
-? const Center(
-child: CircularProgressIndicator(),
-)
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            "Failed to delete session",
+          ),
+        ),
+      );
+    }
+  }
 
-: patient == null
+  // ==========================================================
+  // View Session
+  // ==========================================================
 
-? const Center(
-child: Text(
-"Patient Not Found",
-),
-)
-
-: RefreshIndicator(
-
-onRefresh: refresh,
-
-child: ListView(
-
-padding: const EdgeInsets.all(16),
-
-children: [
-
-//==========================================
-// Patient Details Card
-//==========================================
-
-  Container(
-    padding: const EdgeInsets.all(20),
-    decoration: BoxDecoration(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(10),
-      border: const Border(
-        bottom: BorderSide(
-          color: AppColors.primary,
-          width: 2,
+  void viewSession(
+      SessionModel session,
+      ) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SessionDetailsScreen(
+          session: session,
         ),
       ),
-    ),
-    child: Column(
-      children: [
+    );
+  }
 
-        //==========================================
-        // ROW 1
-        //==========================================
+  // ==========================================================
+  // Download PDF
+  // ==========================================================
 
-        Row(
+  Future<void> generatePdf(
+      SessionModel session,
+      ) async {
+    await PdfService.instance.generateSessionPdf(
+      session,
+    );
+  }
+
+  // ==========================================================
+  // UI
+  // ==========================================================
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        elevation: 0,
+        backgroundColor: AppColors.primary,
+        foregroundColor: Colors.white,
+        titleSpacing: 8,
+        title: const Column(
+          crossAxisAlignment:
+          CrossAxisAlignment.start,
           children: [
-
-            Expanded(
-              child: buildHeaderItem(
-                icon: Icons.person_outline,
-                text: patient!.name,
+            Text(
+              "Patient Record",
+              style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                iconSize: 20,
               ),
             ),
-
-            const SizedBox(width: 20),
-
-            buildHeaderItem(
-              icon: Icons.phone_outlined,
-              text: patient!.phone,
+            SizedBox(height: 2),
+            Text(
+              "Medical History",
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white70,
+              ),
             ),
-
-            const SizedBox(width: 20),
-
-            buildHeaderItem(
-              icon: Icons.cake_outlined,
-              text: "${patient!.age} Y",
-            ),
-
           ],
-        ),
-
-        const SizedBox(height: 16),
-
-        //==========================================
-        // ROW 2
-        //==========================================
-
-        Row(
-          children: [
-
-            SizedBox(
-              width: 140,
-              child: buildHeaderItem(
-                icon: Icons.badge_outlined,
-                text: patient!.patientCode,
-              ),
-            ),
-
-            Expanded(
-              child: buildHeaderItem(
-                icon: Icons.location_on_outlined,
-                text: patient!.address,
-              ),
-            ),
-
-            const SizedBox(width: 20),
-
-            buildHeaderItem(
-              icon: patient!.gender.toLowerCase() == "female"
-                  ? Icons.female
-                  : Icons.male,
-              text: patient!.gender,
-            ),
-
-          ],
-        ),
-
-      ],
-    ),
-  ),
-
-const SizedBox(height: 20),
-
-//==========================================
-// Session History
-//==========================================
-  Row(
-    children: [
-      const Expanded(
-        child: Text(
-          "Previous Sessions",
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
         ),
       ),
 
-      if (sessions.isNotEmpty)
-        FilledButton.icon(
-          onPressed: () async {
-            await PdfService.instance.generateAllSessionsPdf(
-              sessions,
-            );
-          },
-          icon: const Icon(
-            Icons.picture_as_pdf_outlined,
-            size: 18,
-          ),
-          label: const Text(
-            "Get All PDFs",
-          ),
-          style: FilledButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(
-              horizontal: 18,
-              vertical: 14,
+      body: isLoading
+          ? const Center(
+        child: CircularProgressIndicator(),
+      )
+          : patient == null
+          ? const Center(
+        child: Text(
+          "Patient Not Found",
+        ),
+      )
+          : RefreshIndicator(
+        onRefresh: refresh,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            // ==========================================
+            // Patient Details Card
+            // ==========================================
+
+            Container(
+              padding:
+              const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.transparent,
+                borderRadius:
+                BorderRadius.circular(10),
+                border: const Border(
+                  bottom: BorderSide(
+                    color: AppColors.primary,
+                    width: 2,
+                  ),
+                ),
+              ),
+              child: Column(
+                children: [
+                  // ======================================
+                  // ROW 1
+                  // ======================================
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child:
+                        buildHeaderItem(
+                          icon:
+                          Icons.person_outline,
+                          text:
+                          patient!.name,
+                          fontSize: 18,
+                          fontWeight:
+                          FontWeight.bold,
+                          iconSize: 20,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 20,
+                      ),
+
+                      buildHeaderItem(
+                        icon:
+                        Icons.phone_outlined,
+                        text:
+                        patient!.phone,
+                      ),
+
+                      const SizedBox(
+                        width: 20,
+                      ),
+
+                      buildHeaderItem(
+                        icon:
+                        Icons.cake_outlined,
+                        text:
+                        "${patient!.age} Y",
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(
+                    height: 16,
+                  ),
+
+                  // ======================================
+                  // ROW 2
+                  // ======================================
+
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 140,
+                        child:
+                        buildHeaderItem(
+                          icon:
+                          Icons.badge_outlined,
+                          text:
+                          patient!.patientCode,
+                        ),
+                      ),
+
+                      Expanded(
+                        child:
+                        buildHeaderItem(
+                          icon: Icons
+                              .location_on_outlined,
+                          text:
+                          patient!.address,
+                        ),
+                      ),
+
+                      const SizedBox(
+                        width: 20,
+                      ),
+
+                      buildHeaderItem(
+                        icon: patient!.gender
+                            .toLowerCase() ==
+                            "female"
+                            ? Icons.female
+                            : Icons.male,
+                        text:
+                        patient!.gender,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(
+              height: 20,
+            ),
+
+            // ==========================================
+            // Session History
+            // ==========================================
+
+            Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    "Previous Sessions",
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight:
+                      FontWeight.bold,
+                    ),
+                  ),
+                ),
+
+                if (sessions.isNotEmpty)
+                  FilledButton.icon(
+                    onPressed: () async {
+                      await PdfService
+                          .instance
+                          .generateAllSessionsPdf(
+                        sessions,
+                      );
+                    },
+                    icon: const Icon(
+                      Icons
+                          .picture_as_pdf_outlined,
+                      size: 18,
+                    ),
+                    label: const Text(
+                      "Get All PDFs",
+                    ),
+                    style:
+                    FilledButton.styleFrom(
+                      backgroundColor:
+                      AppColors.primary,
+                      foregroundColor:
+                      Colors.white,
+                      padding:
+                      const EdgeInsets
+                          .symmetric(
+                        horizontal: 18,
+                        vertical: 14,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+
+            const SizedBox(
+              height: 15,
+            ),
+
+            // ==========================================
+            // NO SESSIONS
+            // ==========================================
+
+            if (sessions.isEmpty)
+              const Card(
+                child: Padding(
+                  padding:
+                  EdgeInsets.all(25),
+                  child: Center(
+                    child: Text(
+                      "No Sessions Found",
+                    ),
+                  ),
+                ),
+              )
+            else
+              ...List.generate(
+                sessions.length,
+                    (index) {
+                  final session =
+                  sessions[index];
+
+                  final displayNumber =
+                  getDisplaySessionNumber(
+                    index,
+                  );
+
+                  return buildSessionCard(
+                    session,
+                    displayNumber,
+                  );
+                },
+              ),
+
+            const SizedBox(
+              height: 30,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ==========================================================
+  // Info Row
+  // ==========================================================
+
+  Widget buildInfoRow(
+      String title,
+      String value,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 14,
+      ),
+      child: Row(
+        crossAxisAlignment:
+        CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontWeight:
+                FontWeight.w600,
+              ),
             ),
           ),
-        ),
-    ],
-  ),
+          Expanded(
+            child: Text(
+              value,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-const SizedBox(height: 15),
-
-if (sessions.isEmpty)
-
-const Card(
-
-child: Padding(
-
-padding: EdgeInsets.all(25),
-
-child: Center(
-
-child: Text(
-
-"No Sessions Found",
-
-),
-
-),
-
-),
-
-)
-
-else
-
-...sessions.map(
-
-(session) {
-
-return buildSessionCard(
-session,
-);
-
-},
-
-),
-
-const SizedBox(height: 30),
-
-],
-
-),
-
-),
-
-);
-
-}
-
-//==========================================================
-// Info Row
-//==========================================================
-
-Widget buildInfoRow(
-
-String title,
-
-String value,
-
-) {
-
-return Padding(
-
-padding: const EdgeInsets.only(
-bottom: 14,
-),
-
-child: Row(
-
-crossAxisAlignment:
-CrossAxisAlignment.start,
-
-children: [
-
-SizedBox(
-
-width: 130,
-
-child: Text(
-
-title,
-
-style: const TextStyle(
-
-fontWeight:
-FontWeight.w600,
-
-),
-
-),
-
-),
-
-Expanded(
-
-child: Text(value),
-
-),
-
-],
-
-),
-
-);
-
-}
+  // ==========================================================
+  // Header Item
+  // ==========================================================
 
   Widget buildHeaderItem({
     required IconData icon,
     required String text,
     double fontSize = 15,
-    FontWeight fontWeight = FontWeight.w500,
+    FontWeight fontWeight =
+        FontWeight.w500,
     double iconSize = 18,
   }) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-
         Icon(
           icon,
           color: Colors.black87,
           size: iconSize,
         ),
 
-        const SizedBox(width: 6),
+        const SizedBox(
+          width: 6,
+        ),
 
         Text(
           text,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          overflow:
+          TextOverflow.ellipsis,
           style: TextStyle(
             color: Colors.black87,
             fontSize: fontSize,
             fontWeight: fontWeight,
           ),
         ),
-
       ],
     );
   }
-  //==========================================================
-  // Session Card
-  //==========================================================
 
-  Widget buildSessionCard(SessionModel session) {
+  // ==========================================================
+  // Session Card
+  // ==========================================================
+
+  Widget buildSessionCard(
+      SessionModel session,
+      int displayNumber,
+      ) {
+    final DateTime sessionDateTime =
+    getSessionDateTime(session);
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(
+        bottom: 16,
+      ),
       padding: const EdgeInsets.symmetric(
         horizontal: 16,
         vertical: 14,
       ),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius:
+        BorderRadius.circular(18),
         border: Border.all(
           color: AppColors.border,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(.04),
+            color:
+            Colors.black.withOpacity(.04),
             blurRadius: 10,
-            offset: const Offset(0, 4),
+            offset:
+            const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment:
+        CrossAxisAlignment.center,
         children: [
-
-          //----------------------------------------------------
+          // ======================================================
           // Session Number
-          //----------------------------------------------------
+          // ======================================================
 
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.primary,
+            backgroundColor:
+            AppColors.primary,
             child: Text(
-              "${session.sessionNumber}",
+              "$displayNumber",
               style: const TextStyle(
                 color: Colors.white,
-                fontWeight: FontWeight.bold,
+                fontWeight:
+                FontWeight.bold,
               ),
             ),
           ),
 
-          const SizedBox(width: 14),
+          const SizedBox(
+            width: 14,
+          ),
 
-          //----------------------------------------------------
+          // ======================================================
           // Session Details
-          //----------------------------------------------------
+          // ======================================================
 
           Expanded(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment:
+              CrossAxisAlignment.start,
               children: [
                 Text(
-                  "Session ${session.sessionNumber}",
+                  "Session $displayNumber",
                   style: const TextStyle(
                     fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                    fontWeight:
+                    FontWeight.w600,
                   ),
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(
+                  height: 6,
+                ),
+
+                // ==================================================
+                // DATE + TIME
+                // ==================================================
 
                 Row(
                   children: [
-                    // Date
                     const Icon(
-                      Icons.calendar_today_outlined,
+                      Icons
+                          .calendar_today_outlined,
                       size: 14,
-                      color: AppColors.textSecondary,
+                      color:
+                      AppColors.textSecondary,
                     ),
 
-                    const SizedBox(width: 6),
+                    const SizedBox(
+                      width: 6,
+                    ),
 
-                    Text(
-                      formatSessionDate(session.sessionDate),
-                      style: const TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                    Expanded(
+                      child: Text(
+                        formatSessionDateTime(
+                          sessionDateTime
+                              .toIso8601String(),
+                        ),
+                        maxLines: 1,
+                        overflow:
+                        TextOverflow.ellipsis,
+                        style:
+                        const TextStyle(
+                          color:
+                          AppColors
+                              .textSecondary,
+                          fontSize: 13,
+                          fontWeight:
+                          FontWeight.w500,
+                        ),
                       ),
                     ),
 
-                    const SizedBox(width: 20),
+                    const SizedBox(
+                      width: 12,
+                    ),
 
+                    // ==================================================
                     // Payment Amount
+                    // ==================================================
+
                     Container(
                       height: 32,
-                      padding: const EdgeInsets.symmetric(
+                      padding:
+                      const EdgeInsets
+                          .symmetric(
                         horizontal: 10,
                       ),
-                      decoration: BoxDecoration(
-                        color: Colors.blue.shade50,
-                        borderRadius: BorderRadius.circular(6),
+                      decoration:
+                      BoxDecoration(
+                        color:
+                        Colors.blue.shade50,
+                        borderRadius:
+                        BorderRadius
+                            .circular(6),
                         border: Border.all(
-                          color: Colors.blue.shade200,
+                          color:
+                          Colors.blue
+                              .shade200,
                         ),
                       ),
                       child: Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisSize:
+                        MainAxisSize.min,
                         children: [
                           Icon(
-                            Icons.currency_rupee,
+                            Icons
+                                .currency_rupee,
                             size: 14,
-                            color: Colors.blue.shade800,
+                            color: Colors
+                                .blue.shade800,
                           ),
 
-                          const SizedBox(width: 2),
+                          const SizedBox(
+                            width: 2,
+                          ),
 
                           Text(
-                            session.paymentAmount.isEmpty
+                            session
+                                .paymentAmount
+                                .isEmpty
                                 ? "0"
-                                : session.paymentAmount,
+                                : session
+                                .paymentAmount,
                             style: TextStyle(
-                              color: Colors.blue.shade800,
+                              color: Colors
+                                  .blue
+                                  .shade800,
                               fontSize: 12,
-                              fontWeight: FontWeight.bold,
+                              fontWeight:
+                              FontWeight
+                                  .bold,
                             ),
                           ),
                         ],
                       ),
                     ),
 
-                    const SizedBox(width: 8),
+                    const SizedBox(
+                      width: 8,
+                    ),
 
-                    // Read Only Payment Status
-                    //============================================================
-// Payment Status
-// Reception -> Editable
-// Doctor -> Read Only
-//============================================================
+                    // ==================================================
+                    // Payment Status
+                    // Reception -> Editable
+                    // Doctor -> Read Only
+                    // ==================================================
 
                     Builder(
-                      builder: (context) {
-                        final bool paymentCompleted =
-                            session.paymentStatus == "Completed";
+                      builder:
+                          (context) {
+                        final bool
+                        paymentCompleted =
+                            session
+                                .paymentStatus ==
+                                "Completed";
 
-                        //========================================================
-                        // RECEPTION - EDITABLE PAYMENT STATUS
-                        //========================================================
+                        // ==================================================
+                        // RECEPTION
+                        // EDITABLE PAYMENT STATUS
+                        // ==================================================
 
-                        if (AuthService.isReception) {
+                        if (AuthService
+                            .isReception) {
                           return Container(
                             width: 180,
                             height: 32,
-                            padding: const EdgeInsets.symmetric(
+                            padding:
+                            const EdgeInsets
+                                .symmetric(
                               horizontal: 10,
                             ),
-                            decoration: BoxDecoration(
-                              color: paymentCompleted
-                                  ? Colors.green.shade50
-                                  : Colors.orange.shade50,
-                              borderRadius: BorderRadius.circular(6),
-                              border: Border.all(
-                                color: paymentCompleted
-                                    ? Colors.green.shade300
-                                    : Colors.orange.shade300,
+                            decoration:
+                            BoxDecoration(
+                              color:
+                              paymentCompleted
+                                  ? Colors
+                                  .green
+                                  .shade50
+                                  : Colors
+                                  .orange
+                                  .shade50,
+                              borderRadius:
+                              BorderRadius
+                                  .circular(
+                                6,
+                              ),
+                              border:
+                              Border.all(
+                                color:
+                                paymentCompleted
+                                    ? Colors
+                                    .green
+                                    .shade300
+                                    : Colors
+                                    .orange
+                                    .shade300,
                               ),
                             ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: paymentCompleted
+                            child:
+                            DropdownButtonHideUnderline(
+                              child:
+                              DropdownButton<
+                                  String>(
+                                value:
+                                paymentCompleted
                                     ? "Completed"
                                     : "Pending",
-                                isExpanded: true,
-                                icon: Icon(
-                                  Icons.keyboard_arrow_down,
+                                isExpanded:
+                                true,
+                                icon:
+                                Icon(
+                                  Icons
+                                      .keyboard_arrow_down,
                                   size: 18,
-                                  color: paymentCompleted
-                                      ? Colors.green.shade700
-                                      : Colors.orange.shade700,
+                                  color:
+                                  paymentCompleted
+                                      ? Colors
+                                      .green
+                                      .shade700
+                                      : Colors
+                                      .orange
+                                      .shade700,
                                 ),
-                                style: TextStyle(
-                                  color: paymentCompleted
-                                      ? Colors.green.shade700
-                                      : Colors.orange.shade700,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                style:
+                                TextStyle(
+                                  color:
+                                  paymentCompleted
+                                      ? Colors
+                                      .green
+                                      .shade700
+                                      : Colors
+                                      .orange
+                                      .shade700,
+                                  fontSize:
+                                  11,
+                                  fontWeight:
+                                  FontWeight
+                                      .w600,
                                 ),
-                                items: const [
-                                  DropdownMenuItem<String>(
-                                    value: "Pending",
-                                    child: Text(
+                                items:
+                                const [
+                                  DropdownMenuItem<
+                                      String>(
+                                    value:
+                                    "Pending",
+                                    child:
+                                    Text(
                                       "Payment Pending",
                                     ),
                                   ),
-                                  DropdownMenuItem<String>(
-                                    value: "Completed",
-                                    child: Text(
+                                  DropdownMenuItem<
+                                      String>(
+                                    value:
+                                    "Completed",
+                                    child:
+                                    Text(
                                       "Payment Completed",
                                     ),
                                   ),
                                 ],
-                                onChanged: (String? value) async {
-                                  if (value == null ||
-                                      session.id == null ||
-                                      session.id!.isEmpty) {
+                                onChanged:
+                                    (String?
+                                value) async {
+                                  if (value ==
+                                      null ||
+                                      session.id ==
+                                          null ||
+                                      session.id!
+                                          .isEmpty) {
                                     return;
                                   }
 
@@ -766,17 +1081,23 @@ child: Text(value),
                                       value,
                                     );
 
-                                    if (!mounted) return;
+                                    if (!mounted)
+                                      return;
 
                                     await loadData();
 
-                                    if (!mounted) return;
+                                    if (!mounted)
+                                      return;
 
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
+                                    ScaffoldMessenger
+                                        .of(
+                                      context,
+                                    ).showSnackBar(
                                       SnackBar(
-                                        content: Text(
-                                          value == "Completed"
+                                        content:
+                                        Text(
+                                          value ==
+                                              "Completed"
                                               ? "Payment marked as completed"
                                               : "Payment marked as pending",
                                         ),
@@ -787,12 +1108,16 @@ child: Text(value),
                                       "SESSION PAYMENT UPDATE ERROR: $e",
                                     );
 
-                                    if (!mounted) return;
+                                    if (!mounted)
+                                      return;
 
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(
+                                    ScaffoldMessenger
+                                        .of(
+                                      context,
+                                    ).showSnackBar(
                                       const SnackBar(
-                                        content: Text(
+                                        content:
+                                        Text(
                                           "Failed to update payment status",
                                         ),
                                       ),
@@ -804,58 +1129,109 @@ child: Text(value),
                           );
                         }
 
-                        //========================================================
-                        // DOCTOR - READ ONLY PAYMENT STATUS
-                        //========================================================
+                        // ==================================================
+                        // DOCTOR
+                        // READ ONLY PAYMENT STATUS
+                        // ==================================================
 
                         return Container(
                           height: 32,
-                          padding: const EdgeInsets.symmetric(
+                          padding:
+                          const EdgeInsets
+                              .symmetric(
                             horizontal: 10,
                           ),
-                          decoration: BoxDecoration(
-                            color: paymentCompleted
-                                ? Colors.green.shade50
-                                : Colors.orange.shade50,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: paymentCompleted
-                                  ? Colors.green.shade300
-                                  : Colors.orange.shade300,
+                          decoration:
+                          BoxDecoration(
+                            color:
+                            paymentCompleted
+                                ? Colors
+                                .green
+                                .shade50
+                                : Colors
+                                .orange
+                                .shade50,
+                            borderRadius:
+                            BorderRadius
+                                .circular(
+                              6,
+                            ),
+                            border:
+                            Border.all(
+                              color:
+                              paymentCompleted
+                                  ? Colors
+                                  .green
+                                  .shade300
+                                  : Colors
+                                  .orange
+                                  .shade300,
                             ),
                           ),
                           child: Row(
-                            mainAxisSize: MainAxisSize.min,
+                            mainAxisSize:
+                            MainAxisSize
+                                .min,
                             children: [
                               Icon(
                                 paymentCompleted
-                                    ? Icons.check_circle_outline
-                                    : Icons.schedule,
+                                    ? Icons
+                                    .check_circle_outline
+                                    : Icons
+                                    .schedule,
                                 size: 14,
-                                color: paymentCompleted
-                                    ? Colors.green.shade700
-                                    : Colors.orange.shade700,
+                                color:
+                                paymentCompleted
+                                    ? Colors
+                                    .green
+                                    .shade700
+                                    : Colors
+                                    .orange
+                                    .shade700,
                               ),
-                              const SizedBox(width: 5),
+
+                              const SizedBox(
+                                width: 5,
+                              ),
+
                               Text(
                                 paymentCompleted
                                     ? "Payment Completed"
                                     : "Payment Pending",
-                                style: TextStyle(
-                                  color: paymentCompleted
-                                      ? Colors.green.shade700
-                                      : Colors.orange.shade700,
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
+                                style:
+                                TextStyle(
+                                  color:
+                                  paymentCompleted
+                                      ? Colors
+                                      .green
+                                      .shade700
+                                      : Colors
+                                      .orange
+                                      .shade700,
+                                  fontSize:
+                                  11,
+                                  fontWeight:
+                                  FontWeight
+                                      .w600,
                                 ),
                               ),
-                              const SizedBox(width: 5),
+
+                              const SizedBox(
+                                width: 5,
+                              ),
+
                               Icon(
-                                Icons.lock_outline,
+                                Icons
+                                    .lock_outline,
                                 size: 13,
-                                color: paymentCompleted
-                                    ? Colors.green.shade700
-                                    : Colors.orange.shade700,
+                                color:
+                                paymentCompleted
+                                    ? Colors
+                                    .green
+                                    .shade700
+                                    : Colors
+                                    .orange
+                                    .shade700,
                               ),
                             ],
                           ),
@@ -868,41 +1244,54 @@ child: Text(value),
             ),
           ),
 
-          //----------------------------------------------------
+          const SizedBox(
+            width: 12,
+          ),
+
+          // ======================================================
           // Actions
-          //----------------------------------------------------
+          // ======================================================
 
           buildActionButton(
-            icon: Icons.visibility_outlined,
+            icon: Icons
+                .visibility_outlined,
             color: AppColors.primary,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (_) => SessionDetailsScreen(
-                    session: session,
-                  ),
+                  builder: (_) =>
+                      SessionDetailsScreen(
+                        session: session,
+                      ),
                 ),
               );
             },
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(
+            width: 8,
+          ),
 
           buildActionButton(
-            icon: Icons.picture_as_pdf_outlined,
+            icon: Icons
+                .picture_as_pdf_outlined,
             color: Colors.orange,
             onTap: () async {
-              await PdfService.instance.generateSessionPdf(
+              await PdfService.instance
+                  .generateSessionPdf(
                 session,
               );
             },
           ),
 
-          const SizedBox(width: 8),
+          const SizedBox(
+            width: 8,
+          ),
 
           buildActionButton(
-            icon: Icons.delete_outline,
+            icon:
+            Icons.delete_outline,
             color: Colors.red,
             onTap: () {
               deleteSession(session);
@@ -913,6 +1302,10 @@ child: Text(value),
     );
   }
 
+  // ==========================================================
+  // Action Button
+  // ==========================================================
+
   Widget buildActionButton({
     required IconData icon,
     required Color color,
@@ -920,9 +1313,11 @@ child: Text(value),
   }) {
     return Material(
       color: color.withOpacity(.10),
-      borderRadius: BorderRadius.circular(10),
+      borderRadius:
+      BorderRadius.circular(10),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius:
+        BorderRadius.circular(10),
         onTap: onTap,
         child: Container(
           height: 38,
@@ -937,76 +1332,85 @@ child: Text(value),
       ),
     );
   }
+
+  // ==========================================================
+  // Compact Info
+  // ==========================================================
+
   Widget buildCompactInfo(
       IconData icon,
       String value,
       ) {
-
     return Row(
-
       children: [
-
         Icon(
-
           icon,
-
           size: 18,
-
           color: AppColors.primary,
-
         ),
 
-        const SizedBox(width: 6),
+        const SizedBox(
+          width: 6,
+        ),
 
         Expanded(
-
           child: Text(
-
             value,
-
             style: const TextStyle(
-
               fontSize: 14,
-
-              fontWeight: FontWeight.w600,
-
+              fontWeight:
+              FontWeight.w600,
             ),
-
-            overflow: TextOverflow.ellipsis,
-
+            overflow:
+            TextOverflow.ellipsis,
           ),
-
         ),
-
       ],
-
     );
-
-
-
   }
-  String formatSessionDate(String date) {
-    final DateTime parsedDate = DateTime.parse(date);
 
-    final int day = parsedDate.day;
+  // ==========================================================
+  // Legacy Date Formatter
+  // ==========================================================
+  //
+  // Kept here so the rest of the project does not lose the
+  // existing helper.
+  //
+  // ==========================================================
 
-    String suffix = "th";
+  String formatSessionDate(
+      String date,
+      ) {
+    try {
+      final DateTime parsedDate =
+      DateTime.parse(date);
 
-    if (day != 11 && day != 12 && day != 13) {
-      switch (day % 10) {
-        case 1:
-          suffix = "st";
-          break;
-        case 2:
-          suffix = "nd";
-          break;
-        case 3:
-          suffix = "rd";
-          break;
+      final int day =
+          parsedDate.day;
+
+      String suffix = "th";
+
+      if (day != 11 &&
+          day != 12 &&
+          day != 13) {
+        switch (day % 10) {
+          case 1:
+            suffix = "st";
+            break;
+
+          case 2:
+            suffix = "nd";
+            break;
+
+          case 3:
+            suffix = "rd";
+            break;
+        }
       }
+
+      return "$day$suffix ${DateFormat('MMMM yyyy').format(parsedDate)}";
+    } catch (e) {
+      return date;
     }
-
-    return "$day$suffix ${DateFormat('MMMM yyyy').format(parsedDate)}";
   }
-
 }

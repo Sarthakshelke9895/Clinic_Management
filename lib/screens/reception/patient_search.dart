@@ -396,7 +396,7 @@ class _PatientSearchScreenState
                         },
                         icon: const Icon(Icons.person_add_alt_1, size: 20),
                         label: const Text(
-                          "Register000",
+                          "Register",
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                           ),
